@@ -4,11 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Runtime.InteropServices;
+using System.IO;
+using Microsoft.Kinect;
 
 namespace TestReader
 {
     /// <summary>
-    /// 管理非托管内存
+    /// 用来管理非托管内存
     /// </summary>
     unsafe class UnManagedMemory : IDisposable
     {
@@ -25,7 +27,7 @@ namespace TestReader
         public void Dispose()
         {
             Dispose(true);
-            GC.SuppressFinalize(true);
+            GC.SuppressFinalize(this);
         }
 
         protected virtual void Dispose(bool isDisposing)
@@ -51,7 +53,7 @@ namespace TestReader
     /// <summary>
     /// 结构体和字节流之间的互相转换，主要用于离线骨骼数据
     /// </summary>
-    public unsafe class SBConvertor
+    unsafe class SBConvertor
     {
         private static readonly SBConvertor instance = new SBConvertor();
         private SBConvertor() { }
@@ -101,6 +103,90 @@ namespace TestReader
 
                 return Marshal.PtrToStructure(buffer, structType);
             }
+        }
+    }
+
+    public class BodyData
+    {
+        private IDictionary<JointType, Joint> joints = new Dictionary<JointType, Joint>();
+
+        public ulong TrackingId { get; private set; }
+        public IDictionary<JointType, Joint> Joints
+        {
+            get { return joints; }
+        }
+
+        public BodyData(ulong id)
+        {
+            this.TrackingId = id;
+        }
+    }
+
+    public class BodyReader : IDisposable
+    {
+        private FileStream fs;
+        static readonly uint BodyNum = 6;
+        public BodyReader(FileStream fs)
+        {
+            this.fs = fs;
+        }
+
+        public BodyData ReadBody()
+        {
+            using (BinaryReader br = new BinaryReader(this.fs))
+            {
+                BodyData data = new BodyData(br.ReadUInt64());
+
+                int jointNum = Body.JointCount;
+                for (int i = 0; i < jointNum; i++)
+                {
+                    int jointSize = Marshal.SizeOf(typeof(Joint));
+                    byte[] jointBytes = br.ReadBytes(jointSize);
+                    Object o = SBConvertor.Instance.BytesToStruct(jointBytes, typeof(Joint));
+                    Joint joint;
+                    if (o != null)
+                    {
+                        joint = (Joint)o;
+                        data.Joints[joint.JointType] = joint;
+                    }
+                }
+
+                return data;
+            }
+        }
+
+        public BodyData[] ReadBodies(uint count)
+        {
+            BodyData[] bodies = new BodyData[count];
+            for (int i = 0; i < count; i++)
+            {
+                bodies[i] = ReadBody();
+            }
+            return bodies;
+        }
+
+        public BodyData[] ReadAllBodies()
+        {
+            return ReadBodies(BodyNum);
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                this.fs = null;
+            }
+        }
+
+        ~BodyReader()
+        {
+            Dispose(false);
         }
     }
 }
