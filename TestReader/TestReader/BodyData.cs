@@ -131,36 +131,31 @@ namespace TestReader
             this.fs = fs;
         }
 
-        public BodyData ReadBody()
-        {
-            using (BinaryReader br = new BinaryReader(this.fs))
-            {
-                BodyData data = new BodyData(br.ReadUInt64());
-
-                int jointNum = Body.JointCount;
-                for (int i = 0; i < jointNum; i++)
-                {
-                    int jointSize = Marshal.SizeOf(typeof(Joint));
-                    byte[] jointBytes = br.ReadBytes(jointSize);
-                    Object o = SBConvertor.Instance.BytesToStruct(jointBytes, typeof(Joint));
-                    Joint joint;
-                    if (o != null)
-                    {
-                        joint = (Joint)o;
-                        data.Joints[joint.JointType] = joint;
-                    }
-                }
-
-                return data;
-            }
-        }
-
         public BodyData[] ReadBodies(uint count)
         {
             BodyData[] bodies = new BodyData[count];
-            for (int i = 0; i < count; i++)
+            using (BinaryReader br = new BinaryReader(this.fs))
             {
-                bodies[i] = ReadBody();
+                for (int i = 0; i < count; i++)
+                {
+                    BodyData data = new BodyData(br.ReadUInt64());
+
+                    int jointNum = Body.JointCount;
+                    for (int j = 0; j < jointNum; j++)
+                    {
+                        int jointSize = Marshal.SizeOf(typeof(Joint));
+                        byte[] jointBytes = br.ReadBytes(jointSize);
+                        Object o = SBConvertor.Instance.BytesToStruct(jointBytes, typeof(Joint));
+                        Joint joint;
+                        if (o != null)
+                        {
+                            joint = (Joint)o;
+                            data.Joints[joint.JointType] = joint;
+                        }
+                    }
+
+                    bodies[i] = data;
+                }
             }
             return bodies;
         }
