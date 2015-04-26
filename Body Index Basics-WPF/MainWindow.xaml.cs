@@ -370,7 +370,7 @@ namespace Microsoft.Samples.Kinect.BodyIndexBasics
                     //    encoder.Save(fs);
                     //}
                     BitmapFrame colorFrame = BitmapFrame.Create(this.colorBitmap);
-                    SaveMultiSourceData(colorFrame, this.bodyIndexBytes, this.bodies);
+                    SaveMultiSourceData(colorFrame, this.depthBytes, this.bodyIndexBytes, this.bodies);
 
                     this.StatusText_body = string.Format(CultureInfo.CurrentCulture, Properties.Resources.SavedScreenshotStatusTextFormat, path);
                 }
@@ -428,7 +428,7 @@ namespace Microsoft.Samples.Kinect.BodyIndexBasics
         /// <param name="colorFrame">颜色图像</param>
         /// <param name="bodyIndexBytes"></param>
         /// <param name="bodies"></param>
-        private void SaveMultiSourceData(BitmapFrame colorFrame, byte[] depthBytes, byte[] bodyIndexBytes, Body[] bodies, int width, int height)
+        private void SaveMultiSourceData(BitmapFrame colorFrame, byte[] depthBytes, byte[] bodyIndexBytes, Body[] bodies)
         {
             string time = System.DateTime.UtcNow.ToString("hh'-'mm'-'ss", CultureInfo.CurrentUICulture.DateTimeFormat);
             string myPhotos = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
@@ -438,24 +438,52 @@ namespace Microsoft.Samples.Kinect.BodyIndexBasics
             string depthPath = Path.Combine(myPhotos, "DepthData-" + time + ".dp");
 
             // 保存彩色图像
-            if (this.colorBitmap != null)
+            SaveColorData(colorFrame, colorPath);
+
+            // 保存人编号数据流
+            SaveBodyIndexData(bodyIndexBytes, bodyPath);
+
+            // 保存人体骨骼数据
+            SaveSkeletonData(bodies, skeletonPath);
+
+            // 保存深度数据
+            int width = this.depthFrameDescription.Width;
+            int height = this.depthFrameDescription.Height;
+            SaveDepthData(depthBytes, width, height, depthPath);
+        }
+        
+        
+        private void SaveColorData(BitmapFrame colorFrame, string colorPath)
+        {
+            using (FileStream fs = new FileStream(colorPath, FileMode.Create))
             {
                 BitmapEncoder encoder = new PngBitmapEncoder();
                 encoder.Frames.Add(colorFrame);
-                using (FileStream fs = new FileStream(colorPath, FileMode.Create))
-                {
-                    encoder.Save(fs);
-                }
+                encoder.Save(fs);
             }
+        }
 
-            // 保存人编号数据流
+        private void SaveDepthData(byte[] depthBytes, int width, int height, string depthPath)
+        {
+            using (BinaryWriter bw = new BinaryWriter(File.Open(depthPath, FileMode.Create)))
+            {
+                bw.Write(width);
+                bw.Write(height);
+                bw.Write(depthBytes);
+            }
+        }
+
+        private void SaveBodyIndexData(byte[] bodyIndexBytes, string bodyPath)
+        {
             using (BinaryWriter bw = new BinaryWriter(File.Open(bodyPath, FileMode.Create)))
             {
                 bw.Write(bodyIndexBytes.Length);
                 bw.Write(bodyIndexBytes);
             }
-
-            // 保存人体骨骼数据
+        }
+        
+        private void SaveSkeletonData(Body[] bodies, string skeletonPath)
+        {
             using (BinaryWriter bw = new BinaryWriter(File.Open(skeletonPath, FileMode.Create)))
             {
                 foreach (Body body in bodies)
@@ -470,15 +498,8 @@ namespace Microsoft.Samples.Kinect.BodyIndexBasics
                     }
                 }
             }
-
-            // 保存深度数据
-            using (BinaryWriter bw = new BinaryWriter(File.Open(depthPath, FileMode.Create)))
-            {
-                bw.Write(width);
-                bw.Write(height);
-                bw.Write(depthBytes);
-            }
         }
+
         /// <summary>
         /// Renders color pixels into the writeableBitmap.
         /// 修改bodyIndexBitmap的内容
