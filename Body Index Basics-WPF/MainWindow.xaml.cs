@@ -431,7 +431,7 @@ namespace Microsoft.Samples.Kinect.BodyIndexBasics
         private void SaveMultiSourceData(BitmapFrame colorFrame, byte[] depthBytes, byte[] bodyIndexBytes, Body[] bodies)
         {
             string time = System.DateTime.UtcNow.ToString("hh'-'mm'-'ss", CultureInfo.CurrentUICulture.DateTimeFormat);
-            string myPhotos = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
+            string myPhotos = @"V:\GitHub\kinect-picking\GraduationDesign\Data";
             string bodyPath = Path.Combine(myPhotos, "BodyIndex-" + time + ".bi");
             string skeletonPath = Path.Combine(myPhotos, "SkeletonData-" + time + ".skt");
             string colorPath = Path.Combine(myPhotos, "ColorImage-" + time + ".png");
