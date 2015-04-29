@@ -12,4 +12,3 @@ C:\Users\LAZY\Desktop\Body Index Basics-WPF\BodyIndexBasics-WPF\obj\Debug\Micros
 C:\Users\LAZY\Desktop\Body Index Basics-WPF\BodyIndexBasics-WPF\obj\Debug\BodyIndexBasics-WPF.csproj.GenerateResource.Cache
 C:\Users\LAZY\Desktop\Body Index Basics-WPF\BodyIndexBasics-WPF\obj\Debug\BodyIndexBasics-WPF.exe
 C:\Users\LAZY\Desktop\Body Index Basics-WPF\BodyIndexBasics-WPF\obj\Debug\BodyIndexBasics-WPF.pdb
-C:\Users\koala\Documents\GitHub\GraduationDesign\Body Index Basics-WPF\bin\AnyCPU\Debug\BodyIndexBasics-WPF.exe.config

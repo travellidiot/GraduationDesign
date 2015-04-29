@@ -6,10 +6,3 @@ C:\Users\koala\Desktop\TestReader\TestReader\bin\Debug\Microsoft.Kinect.xml
 C:\Users\koala\Desktop\TestReader\TestReader\obj\Debug\TestReader.csprojResolveAssemblyReference.cache
 C:\Users\koala\Desktop\TestReader\TestReader\obj\Debug\TestReader.exe
 C:\Users\koala\Desktop\TestReader\TestReader\obj\Debug\TestReader.pdb
-C:\Users\koala\Documents\GitHub\GraduationDesign\TestReader\TestReader\bin\Debug\TestReader.exe.config
-C:\Users\koala\Documents\GitHub\GraduationDesign\TestReader\TestReader\obj\Debug\TestReader.exe
-C:\Users\koala\Documents\GitHub\GraduationDesign\TestReader\TestReader\obj\Debug\TestReader.pdb
-C:\Users\koala\Documents\GitHub\GraduationDesign\TestReader\TestReader\bin\Debug\TestReader.exe
-C:\Users\koala\Documents\GitHub\GraduationDesign\TestReader\TestReader\bin\Debug\TestReader.pdb
-C:\Users\koala\Documents\GitHub\GraduationDesign\TestReader\TestReader\bin\Debug\Microsoft.Kinect.dll
-C:\Users\koala\Documents\GitHub\GraduationDesign\TestReader\TestReader\bin\Debug\Microsoft.Kinect.xml
