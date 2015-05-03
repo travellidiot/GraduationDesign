@@ -46,6 +46,7 @@
   <ItemGroup>
     <Compile Include="BodyData.cs" />
     <Compile Include="FeatureExtracter.cs" />
+    <Compile Include="Histogram.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
