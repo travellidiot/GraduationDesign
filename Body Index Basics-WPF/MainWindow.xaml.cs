@@ -96,6 +96,7 @@ namespace Microsoft.Samples.Kinect.BodyIndexBasics
         /// </summary>
         private Body[] bodies = null;
 
+        private ulong[] trackingIds = null;
 
         private byte[] depthBytes = null;
 
@@ -228,6 +229,10 @@ namespace Microsoft.Samples.Kinect.BodyIndexBasics
                     if (this.bodies == null)
                     {
                         this.bodies = new Body[bodyFrame.BodyCount];
+                    }
+                    if (this.trackingIds == null)
+                    {
+                        this.trackingIds = new ulong[bodyFrame.BodyCount];
                     }
                     bodyFrame.GetAndRefreshBodyData(this.bodies);
                 }
@@ -396,21 +401,27 @@ namespace Microsoft.Samples.Kinect.BodyIndexBasics
             byte* frameData = (byte*)bodyIndexFrameData;
             int bodyPixelCount = 0;
 
-            // convert body index to a visual representation
-            for (int i = 0; i < (int)bodyIndexFrameDataSize; ++i)
-            {
-                // the BodyColor array has been sized to match
-                // BodyFrameSource.BodyCount
-                if (frameData[i] < BodyColor.Length)
+            //for (int i = 0; i < bodies.Length; i++)
+            //{
+            //    trackingIds[i] = bodies[i].TrackingId;
+            //}
+
+                // convert body index to a visual representation
+                for (int i = 0; i < (int)bodyIndexFrameDataSize; ++i)
                 {
-                    this.bodyIndexPixels[i] = BodyColor[frameData[i]];
-                    bodyPixelCount++;
+                    // the BodyColor array has been sized to match
+                    // BodyFrameSource.BodyCount
+                    if (frameData[i] < BodyColor.Length)
+                    {
+                        System.Diagnostics.Debug.WriteLine(frameData[i]);
+                        this.bodyIndexPixels[i] = BodyColor[frameData[i]];
+                        bodyPixelCount++;
+                    }
+                    else
+                    {
+                        this.bodyIndexPixels[i] = 0x00000000;
+                    }
                 }
-                else
-                {
-                    this.bodyIndexPixels[i] = 0x00000000;
-                }
-            }
 
             //if (bodyPixelCount > 100)
             //{
@@ -490,6 +501,9 @@ namespace Microsoft.Samples.Kinect.BodyIndexBasics
                 {
                     ulong idx = body.TrackingId;
                     bw.Write(idx);
+
+
+
                     IReadOnlyDictionary<JointType, Joint> Joints = body.Joints;
                     foreach (var joint in Joints.Values)
                     {
@@ -507,6 +521,7 @@ namespace Microsoft.Samples.Kinect.BodyIndexBasics
         private void RenderBodyIndexPixels()
         {
             //Console.WriteLine(this.bodyIndexBitmap.PixelWidth);
+            System.Diagnostics.Debug.WriteLine(this.bodyIndexBitmap.PixelWidth);
             this.bodyIndexBitmap.WritePixels(
                 new Int32Rect(0, 0, this.bodyIndexBitmap.PixelWidth, this.bodyIndexBitmap.PixelHeight),
                 this.bodyIndexPixels,
