@@ -2,6 +2,7 @@
 // <copyright file="MainWindow.xaml.cs" company="Microsoft">
 //     Copyright (c) Microsoft Corporation.  All rights reserved.
 // </copyright>
+//retry
 //------------------------------------------------------------------------------
 
 namespace Microsoft.Samples.Kinect.BodyIndexBasics
@@ -401,10 +402,11 @@ namespace Microsoft.Samples.Kinect.BodyIndexBasics
             byte* frameData = (byte*)bodyIndexFrameData;
             int bodyPixelCount = 0;
 
-            //for (int i = 0; i < bodies.Length; i++)
-            //{
-            //    trackingIds[i] = bodies[i].TrackingId;
-            //}
+
+            for (int i = 0; i < bodies.Length; i++)
+            {
+                trackingIds[i] = bodies[i].TrackingId;
+            }
 
                 // convert body index to a visual representation
                 for (int i = 0; i < (int)bodyIndexFrameDataSize; ++i)

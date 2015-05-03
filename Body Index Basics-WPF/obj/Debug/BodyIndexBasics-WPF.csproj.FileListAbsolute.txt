@@ -18,7 +18,6 @@ V:\GitHub\kinect-picking\GraduationDesign\Body Index Basics-WPF\bin\AnyCPU\Debug
 V:\GitHub\kinect-picking\GraduationDesign\Body Index Basics-WPF\bin\AnyCPU\Debug\BodyIndexBasics-WPF.pdb
 V:\GitHub\kinect-picking\GraduationDesign\Body Index Basics-WPF\bin\AnyCPU\Debug\Microsoft.Kinect.dll
 V:\GitHub\kinect-picking\GraduationDesign\Body Index Basics-WPF\bin\AnyCPU\Debug\Microsoft.Kinect.xml
-V:\GitHub\kinect-picking\GraduationDesign\Body Index Basics-WPF\obj\Debug\BodyIndexBasics-WPF.csprojResolveAssemblyReference.cache
 V:\GitHub\kinect-picking\GraduationDesign\Body Index Basics-WPF\obj\Debug\MainWindow.baml
 V:\GitHub\kinect-picking\GraduationDesign\Body Index Basics-WPF\obj\Debug\MainWindow.g.cs
 V:\GitHub\kinect-picking\GraduationDesign\Body Index Basics-WPF\obj\Debug\App.g.cs
