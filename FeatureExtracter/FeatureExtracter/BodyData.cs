@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 using System.IO;
 using Microsoft.Kinect;
 
-namespace FeatureExtracter
+namespace TestReader
 {
     /// <summary>
     /// 用来管理非托管内存
@@ -53,7 +53,7 @@ namespace FeatureExtracter
     /// <summary>
     /// 结构体和字节流之间的互相转换，主要用于离线骨骼数据
     /// </summary>
-    class SBConvertor
+    unsafe class SBConvertor
     {
         private static readonly SBConvertor instance = new SBConvertor();
         private SBConvertor() { }
@@ -78,16 +78,12 @@ namespace FeatureExtracter
 
             using (UnManagedMemory mem = new UnManagedMemory(size))
             {
-                unsafe
-                {
-                    IntPtr buffer = (IntPtr)mem.Handle;
-                    Marshal.StructureToPtr(structure, buffer, false);
-                    Marshal.Copy(buffer, bytes, 0, size);
-                }
-                
+                IntPtr buffer = (IntPtr)mem.Handle;
+                Marshal.StructureToPtr(structure, buffer, false);
+                Marshal.Copy(buffer, bytes, 0, size);
+
                 return bytes;
             }
-            
         }
 
         /// <summary>
@@ -102,13 +98,10 @@ namespace FeatureExtracter
 
             using (UnManagedMemory mem = new UnManagedMemory(size))
             {
-                unsafe
-                {
-                    IntPtr buffer = (IntPtr)mem.Handle;
-                    Marshal.Copy(bytes, 0, buffer, size);
+                IntPtr buffer = (IntPtr)mem.Handle;
+                Marshal.Copy(bytes, 0, buffer, size);
 
-                    return Marshal.PtrToStructure(buffer, structType);
-                }
+                return Marshal.PtrToStructure(buffer, structType);
             }
         }
     }
@@ -131,38 +124,43 @@ namespace FeatureExtracter
 
     public class BodyReader : IDisposable
     {
-        private FileStream fs;
-        readonly uint BodyNum = 6;
-        public BodyReader(FileStream fs)
+        private Stream fs;
+        static readonly uint BodyNum = 6;
+        public BodyReader(Stream fs)
         {
             this.fs = fs;
+        }
+
+        public BodyData ReadBody()
+        {
+            using (BinaryReader br = new BinaryReader(this.fs))
+            {
+                BodyData data = new BodyData(br.ReadUInt64());
+
+                int jointNum = Body.JointCount;
+                for (int i = 0; i < jointNum; i++)
+                {
+                    int jointSize = Marshal.SizeOf(typeof(Joint));
+                    byte[] jointBytes = br.ReadBytes(jointSize);
+                    Object o = SBConvertor.Instance.BytesToStruct(jointBytes, typeof(Joint));
+                    Joint joint;
+                    if (o != null)
+                    {
+                        joint = (Joint)o;
+                        data.Joints[joint.JointType] = joint;
+                    }
+                }
+
+                return data;
+            }
         }
 
         public BodyData[] ReadBodies(uint count)
         {
             BodyData[] bodies = new BodyData[count];
-            using (BinaryReader br = new BinaryReader(this.fs))
+            for (int i = 0; i < count; i++)
             {
-                for (int i = 0; i < count; i++)
-                {
-                    BodyData data = new BodyData(br.ReadUInt64());
-
-                    int jointNum = Body.JointCount;
-                    for (int j = 0; j < jointNum; j++)
-                    {
-                        int jointSize = Marshal.SizeOf(typeof(Joint));
-                        byte[] jointBytes = br.ReadBytes(jointSize);
-                        Object o = SBConvertor.Instance.BytesToStruct(jointBytes, typeof(Joint));
-                        Joint joint;
-                        if (o != null)
-                        {
-                            joint = (Joint)o;
-                            data.Joints[joint.JointType] = joint;
-                        }
-                    }
-
-                    bodies[i] = data;
-                }
+                bodies[i] = ReadBody();
             }
             return bodies;
         }
