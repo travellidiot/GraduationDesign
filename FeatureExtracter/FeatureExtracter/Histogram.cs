@@ -63,15 +63,31 @@ namespace FeatureExtracter
         }
     }
 
-    interface IHistogram<T>
+    public interface IHistogram<T>
     {
+        /// <summary>
+        /// 指定bin的值
+        /// </summary>
+        /// <param name="bin">要指定的bin</param>
+        /// <returns></returns>
         float this[T bin] { get; set; }
+        /// <summary>
+        /// 都直方图归一化
+        /// </summary>
         void Norm();
+        /// <summary>
+        /// 判断是否已经归一化
+        /// </summary>
         bool  Normalized{ get; set; }
+        /// <summary>
+        /// 计算与另一个直方图的距离
+        /// </summary>
+        /// <param name="histo"></param>
+        /// <returns></returns>
         double DistanceTo(IHistogram<T> histo);
     }
 
-    class HueHisto : IHistogram<byte>
+    public class HueHisto : IHistogram<byte>
     {
         /// <summary>
         /// Hue直方图的维度，即bin的数量

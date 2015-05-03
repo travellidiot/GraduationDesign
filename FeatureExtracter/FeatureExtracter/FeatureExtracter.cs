@@ -82,7 +82,21 @@ namespace FeatureExtracter
 
         public void test()
         {
-            
+            for (int i = 0; i < bodies.Length; i++)
+            {
+                if (bodies[i].TrackingId == 0)
+                    continue;
+
+                HueHisto hhisto = UpBodyHueHisto(i);
+                using (BinaryWriter fs = new BinaryWriter(File.Open(@"C:\Users\koala\Documents\GitHub\GraduationDesign\Test\hist.txt", FileMode.Create)))
+                {
+                    fs.Write("Body " + i + ":\n");
+                    for (byte bin = 0; bin < HueHisto.Dimension; bin++)
+                    {
+                        fs.Write("bin " + bin + ":\t\t" + hhisto[bin] + "\n");
+                    }
+                }
+            }
         }
 
         private DepthSpacePoint[] getJointsPosInColorSpace(int bodyIndex)
@@ -107,6 +121,12 @@ namespace FeatureExtracter
 
             return rect;
         }
+
+        /// <summary>
+        /// 取上半身包围盒，先这么着吧，结构都搭好了再说
+        /// </summary>
+        /// <param name="joints">人体所有节点</param>
+        /// <returns></returns>
         private Tuple<float, float, float, float> getUpBodyBox(DepthSpacePoint[] joints)
         {
             DepthSpacePoint[] upBodyJoints = new DepthSpacePoint[]
@@ -122,26 +142,44 @@ namespace FeatureExtracter
             return getBox(upBodyJoints);
         }
 
-        public IHistogram<byte> UpBodyHueHisto(int bodyIndex)
+        public HueHisto UpBodyHueHisto(int bodyIndex)
         {
             DepthSpacePoint[] jointsInDepthSpacePoints = getJointsPosInColorSpace(bodyIndex);
             Tuple<float, float, float, float> rect = getUpBodyBox(jointsInDepthSpacePoints);
-            
+            BitmapData bitmapData = this.colorBitmap.LockBits(new Rectangle(0, 0, colorBitmap.Width, colorBitmap.Height),
+                ImageLockMode.ReadOnly, colorBitmap.PixelFormat);
             
             HueHisto hhisto = new HueHisto();
-            unsafe
-            {
-                fixed (byte* scan0 = &bodyIndexBytes[0])
-                {
-                    for (float i = rect.Item4; i < rect.Item2; i++)
-                    {
-                        for (float j = rect.Item1; j < rect.Item3; j++)
-                        {
                             
+            for (float i = rect.Item4; i < rect.Item2+1; i++)
+            {
+                for (float j = rect.Item1; j < rect.Item3+1; j++)
+                {
+                    int depthX = (int)(j + 0.5);
+                    int depthY = (int)(i + 0.5);
+                    if ((depthX >= 0) && (depthX <= depthWidth) && (depthY >= 0) && (depthY <= depthHeight))
+                    {
+                        int depthIndex = depthY * depthWidth + depthX;
+                        if (bodyIndexBytes[depthIndex] == bodyIndex)
+                        {
+                            int colorX = (int)(depthMappedToColorPoints[depthIndex].X + 0.5);
+                            int colorY = (int)(depthMappedToColorPoints[depthIndex].Y + 0.5);
+
+                            unsafe
+                            {
+                                byte* p = (byte*)bitmapData.Scan0;
+                                int index = colorY * bitmapData.Stride + colorX * 3;
+                                int r = index, g = index + 1, b = index + 2;
+                                float hue = ColorConvertor.Instance.GetHue(*(p + r), *(p + g), *(p + b));
+                                byte bin = (byte)(hue / (360 / HueHisto.Dimension));
+                                hhisto[bin]++;
+                            }
                         }
                     }
                 }
             }
+
+            return hhisto;
         }
     }
 }
