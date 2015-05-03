@@ -6,11 +6,13 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Drawing;
 using System.Drawing.Imaging;
+using Microsoft.Kinect;
 
 namespace FeatureExtracter
 {
     class Program
     {
+        
         static void Main(string[] args)
         {
         }
