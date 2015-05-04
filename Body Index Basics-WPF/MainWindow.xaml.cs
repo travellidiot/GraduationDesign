@@ -99,6 +99,8 @@ namespace Microsoft.Samples.Kinect.BodyIndexBasics
 
         private ulong[] trackingIds = null;
 
+        private int count = 0;
+
         private byte[] depthBytes = null;
 
         /// <summary>
@@ -133,7 +135,6 @@ namespace Microsoft.Samples.Kinect.BodyIndexBasics
             // allocate space to put the pixels being converted
             this.bodyIndexPixels = new uint[this.bodyIndexFrameDescription.Width * this.bodyIndexFrameDescription.Height];
             this.depthBytes = new byte[this.depthFrameDescription.Width * this.depthFrameDescription.Height * this.depthFrameDescription.BytesPerPixel];
-
             // create the bitmap to display
             this.bodyIndexBitmap = new WriteableBitmap(this.bodyIndexFrameDescription.Width, this.bodyIndexFrameDescription.Height, 96.0, 96.0, PixelFormats.Bgr32, null);
 
@@ -166,34 +167,7 @@ namespace Microsoft.Samples.Kinect.BodyIndexBasics
         void Reader_MultiSourceFrameArrived(object sender, MultiSourceFrameArrivedEventArgs e)
         {
             MultiSourceFrame multiSourceFrame = e.FrameReference.AcquireFrame();
-            bool bodyIndexFrameProcessed = false;
-
-            // 处理BodyIndex数据流
-            using (BodyIndexFrame bodyIndexFrame = multiSourceFrame.BodyIndexFrameReference.AcquireFrame())
-            {
-                if (bodyIndexFrame != null)
-                {
-                    // the fastest way to process the body index data is to directly access 
-                    // the underlying buffer
-                    using (Microsoft.Kinect.KinectBuffer bodyIndexBuffer = bodyIndexFrame.LockImageBuffer())
-                    {
-                        // verify data and write the color data to the display bitmap
-                        if (((this.bodyIndexFrameDescription.Width * this.bodyIndexFrameDescription.Height) == bodyIndexBuffer.Size) &&
-                            (this.bodyIndexFrameDescription.Width == this.bodyIndexBitmap.PixelWidth) && (this.bodyIndexFrameDescription.Height == this.bodyIndexBitmap.PixelHeight))
-                        {
-                            this.ProcessBodyIndexFrameData(bodyIndexBuffer.UnderlyingBuffer, bodyIndexBuffer.Size);
-                            this.bodyIndexBytes = new byte[bodyIndexBuffer.Size];
-                            Marshal.Copy(bodyIndexBuffer.UnderlyingBuffer, this.bodyIndexBytes, 0, (int)bodyIndexBuffer.Size);
-                            bodyIndexFrameProcessed = true;
-                        }
-                    }
-                }
-            }
-
-            if (bodyIndexFrameProcessed)
-            {
-                this.RenderBodyIndexPixels();
-            }
+            
 
             // 处理颜色图像
             using (ColorFrame colorFrame = multiSourceFrame.ColorFrameReference.AcquireFrame())
@@ -250,6 +224,36 @@ namespace Microsoft.Samples.Kinect.BodyIndexBasics
                         Marshal.Copy(depthBuffer.UnderlyingBuffer, this.depthBytes, 0, (int)depthBuffer.Size);
                     }
                 }
+            }
+
+            bool bodyIndexFrameProcessed = false;
+            Debug.WriteLine("depth bytes: {0}", depthBytes.Length);
+
+            // 处理BodyIndex数据流
+            using (BodyIndexFrame bodyIndexFrame = multiSourceFrame.BodyIndexFrameReference.AcquireFrame())
+            {
+                if (bodyIndexFrame != null)
+                {
+                    // the fastest way to process the body index data is to directly access 
+                    // the underlying buffer
+                    using (Microsoft.Kinect.KinectBuffer bodyIndexBuffer = bodyIndexFrame.LockImageBuffer())
+                    {
+                        // verify data and write the color data to the display bitmap
+                        if (((this.bodyIndexFrameDescription.Width * this.bodyIndexFrameDescription.Height) == bodyIndexBuffer.Size) &&
+                            (this.bodyIndexFrameDescription.Width == this.bodyIndexBitmap.PixelWidth) && (this.bodyIndexFrameDescription.Height == this.bodyIndexBitmap.PixelHeight))
+                        {
+                            this.ProcessBodyIndexFrameData(bodyIndexBuffer.UnderlyingBuffer, bodyIndexBuffer.Size);
+                            this.bodyIndexBytes = new byte[bodyIndexBuffer.Size];
+                            Marshal.Copy(bodyIndexBuffer.UnderlyingBuffer, this.bodyIndexBytes, 0, (int)bodyIndexBuffer.Size);
+                            bodyIndexFrameProcessed = true;
+                        }
+                    }
+                }
+            }
+
+            if (bodyIndexFrameProcessed)
+            {
+                this.RenderBodyIndexPixels();
             }
         }
 
@@ -402,11 +406,20 @@ namespace Microsoft.Samples.Kinect.BodyIndexBasics
             byte* frameData = (byte*)bodyIndexFrameData;
             int bodyPixelCount = 0;
 
-
-            for (int i = 0; i < bodies.Length; i++)
+            if(bodies == null)
             {
-                trackingIds[i] = bodies[i].TrackingId;
+                //System.Diagnostics.Debug.WriteLine("Bodies is null!!");
             }
+            else
+            {
+                //System.Diagnostics.Debug.WriteLine("Not null " + count++);
+                for (int i = 0; i < bodies.Length; i++)
+                {
+                    trackingIds[i] = bodies[i].TrackingId;
+                    //System.Diagnostics.Debug.WriteLine("Not null " + trackingIds[i]);
+                }
+            }
+            
 
                 // convert body index to a visual representation
                 for (int i = 0; i < (int)bodyIndexFrameDataSize; ++i)
@@ -415,7 +428,7 @@ namespace Microsoft.Samples.Kinect.BodyIndexBasics
                     // BodyFrameSource.BodyCount
                     if (frameData[i] < BodyColor.Length)
                     {
-                        System.Diagnostics.Debug.WriteLine(frameData[i]);
+                        //System.Diagnostics.Debug.WriteLine(frameData[i]);
                         this.bodyIndexPixels[i] = BodyColor[frameData[i]];
                         bodyPixelCount++;
                     }
@@ -523,7 +536,7 @@ namespace Microsoft.Samples.Kinect.BodyIndexBasics
         private void RenderBodyIndexPixels()
         {
             //Console.WriteLine(this.bodyIndexBitmap.PixelWidth);
-            System.Diagnostics.Debug.WriteLine(this.bodyIndexBitmap.PixelWidth);
+            //System.Diagnostics.Debug.WriteLine(this.bodyIndexBitmap.PixelWidth);
             this.bodyIndexBitmap.WritePixels(
                 new Int32Rect(0, 0, this.bodyIndexBitmap.PixelWidth, this.bodyIndexBitmap.PixelHeight),
                 this.bodyIndexPixels,

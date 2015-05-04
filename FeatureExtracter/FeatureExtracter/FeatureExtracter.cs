@@ -7,22 +7,32 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Diagnostics;
 using Microsoft.Kinect;
 
 namespace FeatureExtracter
 {
     public class FeatureExtracter
     {
+        private KinectSensor kinectSensor = null;
         private CoordinateMapper coordinateMapper = null;
         private ColorSpacePoint[] depthMappedToColorPoints = null;
         private CameraSpacePoint[][] jointsInCameraSpace = null;
         private byte[] depthBytes = null;
+        private ushort[] depthFrameBytes = null;
         private byte[] bodyIndexBytes = null;
         private BodyData[] bodies = null;
         private Bitmap colorBitmap = null;
 
         private int depthWidth = 0;
         private int depthHeight = 0;
+
+        public FeatureExtracter()
+        {
+            this.kinectSensor = KinectSensor.GetDefault();
+            this.coordinateMapper = kinectSensor.CoordinateMapper;
+        }
+
 
         /// <summary>
         /// 载入提取特征需要的文件（彩色图像，深度数据，BodyIndex数据，骨骼数据）
@@ -36,11 +46,14 @@ namespace FeatureExtracter
         {
             colorBitmap = new Bitmap(colorFileName);
 
+            int bytesPerPixel = Marshal.SizeOf(typeof(ushort)) / Marshal.SizeOf(typeof(byte));
             using (BinaryReader br = new BinaryReader(File.Open(depthFileName, FileMode.Open)))
             {
                 this.depthWidth = br.ReadInt32();
                 this.depthHeight = br.ReadInt32();
-                this.depthBytes = br.ReadBytes(this.depthWidth * this.depthHeight);
+                this.depthBytes = br.ReadBytes(this.depthWidth * this.depthHeight * bytesPerPixel);
+                this.depthFrameBytes = new ushort[this.depthBytes.Length / 2];
+                Buffer.BlockCopy(this.depthBytes, 0, this.depthFrameBytes, 0, this.depthBytes.Length);
             }
 
             using (BinaryReader br = new BinaryReader(File.Open(depthIndexFileName, FileMode.Open)))
@@ -65,19 +78,12 @@ namespace FeatureExtracter
                 foreach (Joint joint in body.Joints.Values)
                 {
                     jointsInCameraSpace[i][(int)joint.JointType] = joint.Position;
+                    Debug.WriteLine("{0}, {1}, {2}", joint.Position.X, joint.Position.Y, joint.Position.Z);
                 }
             }
-
-            depthMappedToColorPoints = new ColorSpacePoint[depthBytes.Length];
-            unsafe
-            {
-                fixed (byte* scan0 = &depthBytes[0])
-                {
-                    IntPtr ptr = (IntPtr)scan0;
-                    coordinateMapper.MapDepthFrameToColorSpaceUsingIntPtr(ptr,
-                        (uint)depthBytes.Length, depthMappedToColorPoints);
-                }
-            }
+            
+            depthMappedToColorPoints = new ColorSpacePoint[this.depthFrameBytes.Length];
+            coordinateMapper.MapDepthFrameToColorSpace(depthFrameBytes, depthMappedToColorPoints);
         }
 
         public void test()
@@ -85,15 +91,20 @@ namespace FeatureExtracter
             for (int i = 0; i < bodies.Length; i++)
             {
                 if (bodies[i].TrackingId == 0)
-                    continue;
-
-                HueHisto hhisto = UpBodyHueHisto(i);
-                using (BinaryWriter fs = new BinaryWriter(File.Open(@"C:\Users\koala\Documents\GitHub\GraduationDesign\Test\hist.txt", FileMode.Create)))
                 {
-                    fs.Write("Body " + i + ":\n");
+                    continue;
+                }
+
+                Debug.WriteLine("{0}, {1}", i, bodies[i].TrackingId);
+                HueHisto hhisto = UpBodyHueHisto(i);
+                using (BinaryWriter fs = new BinaryWriter(File.Open(@"V:\GitHub\kinect-picking\GraduationDesign\Test\hist.txt", FileMode.Append)))
+                {
+                    string line = "Boddy " + i.ToString() + ":\r\n";
+                    fs.Write(line);
                     for (byte bin = 0; bin < HueHisto.Dimension; bin++)
                     {
-                        fs.Write("bin " + bin + ":\t\t" + hhisto[bin] + "\n");
+                        line = "bin " + bin.ToString() + ":\t" + hhisto[bin].ToString() + "\r\n";
+                        fs.Write(line);
                     }
                 }
             }
@@ -150,7 +161,8 @@ namespace FeatureExtracter
                 ImageLockMode.ReadOnly, colorBitmap.PixelFormat);
             
             HueHisto hhisto = new HueHisto();
-                            
+
+            Debug.WriteLine(rect);
             for (float i = rect.Item4; i < rect.Item2+1; i++)
             {
                 for (float j = rect.Item1; j < rect.Item3+1; j++)
@@ -178,6 +190,8 @@ namespace FeatureExtracter
                     }
                 }
             }
+
+            this.colorBitmap.UnlockBits(bitmapData);
 
             return hhisto;
         }
