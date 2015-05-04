@@ -13,3 +13,11 @@ C:\Users\koala\Documents\GitHub\GraduationDesign\TestReader\TestReader\bin\Debug
 C:\Users\koala\Documents\GitHub\GraduationDesign\TestReader\TestReader\bin\Debug\TestReader.pdb
 C:\Users\koala\Documents\GitHub\GraduationDesign\TestReader\TestReader\bin\Debug\Microsoft.Kinect.dll
 C:\Users\koala\Documents\GitHub\GraduationDesign\TestReader\TestReader\bin\Debug\Microsoft.Kinect.xml
+V:\GitHub\kinect-picking\GraduationDesign\TestReader\TestReader\bin\Debug\TestReader.exe.config
+V:\GitHub\kinect-picking\GraduationDesign\TestReader\TestReader\bin\Debug\TestReader.exe
+V:\GitHub\kinect-picking\GraduationDesign\TestReader\TestReader\bin\Debug\TestReader.pdb
+V:\GitHub\kinect-picking\GraduationDesign\TestReader\TestReader\bin\Debug\Microsoft.Kinect.dll
+V:\GitHub\kinect-picking\GraduationDesign\TestReader\TestReader\bin\Debug\Microsoft.Kinect.xml
+V:\GitHub\kinect-picking\GraduationDesign\TestReader\TestReader\obj\Debug\TestReader.csprojResolveAssemblyReference.cache
+V:\GitHub\kinect-picking\GraduationDesign\TestReader\TestReader\obj\Debug\TestReader.exe
+V:\GitHub\kinect-picking\GraduationDesign\TestReader\TestReader\obj\Debug\TestReader.pdb

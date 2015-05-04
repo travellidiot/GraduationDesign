@@ -135,7 +135,6 @@ namespace Microsoft.Samples.Kinect.BodyIndexBasics
             // allocate space to put the pixels being converted
             this.bodyIndexPixels = new uint[this.bodyIndexFrameDescription.Width * this.bodyIndexFrameDescription.Height];
             this.depthBytes = new byte[this.depthFrameDescription.Width * this.depthFrameDescription.Height * this.depthFrameDescription.BytesPerPixel];
-
             // create the bitmap to display
             this.bodyIndexBitmap = new WriteableBitmap(this.bodyIndexFrameDescription.Width, this.bodyIndexFrameDescription.Height, 96.0, 96.0, PixelFormats.Bgr32, null);
 
@@ -228,6 +227,7 @@ namespace Microsoft.Samples.Kinect.BodyIndexBasics
             }
 
             bool bodyIndexFrameProcessed = false;
+            Debug.WriteLine("depth bytes: {0}", depthBytes.Length);
 
             // 处理BodyIndex数据流
             using (BodyIndexFrame bodyIndexFrame = multiSourceFrame.BodyIndexFrameReference.AcquireFrame())
@@ -408,15 +408,15 @@ namespace Microsoft.Samples.Kinect.BodyIndexBasics
 
             if(bodies == null)
             {
-                System.Diagnostics.Debug.WriteLine("Bodies is null!!");
+                //System.Diagnostics.Debug.WriteLine("Bodies is null!!");
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine("Not null " + count++);
+                //System.Diagnostics.Debug.WriteLine("Not null " + count++);
                 for (int i = 0; i < bodies.Length; i++)
                 {
                     trackingIds[i] = bodies[i].TrackingId;
-                    System.Diagnostics.Debug.WriteLine("Not null " + trackingIds[i]);
+                    //System.Diagnostics.Debug.WriteLine("Not null " + trackingIds[i]);
                 }
             }
             
