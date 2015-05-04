@@ -14,7 +14,8 @@ namespace FeatureExtracter
     public class FeatureExtracter
     {
         private CoordinateMapper coordinateMapper = null;
-        private ColorSpacePoint[] colorMappedToDepthPoints = null;
+        private ColorSpacePoint[] depthMappedToColorPoints = null;
+        private CameraSpacePoint[][] jointsInCameraSpace = null;
         private byte[] depthBytes = null;
         private byte[] bodyIndexBytes = null;
         private BodyData[] bodies = null;
@@ -52,17 +53,133 @@ namespace FeatureExtracter
             {
                 this.bodies = br.ReadAllBodies();
             }
+
+            jointsInCameraSpace = new CameraSpacePoint[bodies.Length][];
+            for (int i = 0; i < this.bodies.Length; i++)
+            {
+                BodyData body = this.bodies[i];
+                if (body.TrackingId == 0)
+                    continue;
+
+                jointsInCameraSpace[i] = new CameraSpacePoint[body.Joints.Count];
+                foreach (Joint joint in body.Joints.Values)
+                {
+                    jointsInCameraSpace[i][(int)joint.JointType] = joint.Position;
+                }
+            }
+
+            depthMappedToColorPoints = new ColorSpacePoint[depthBytes.Length];
+            unsafe
+            {
+                fixed (byte* scan0 = &depthBytes[0])
+                {
+                    IntPtr ptr = (IntPtr)scan0;
+                    coordinateMapper.MapDepthFrameToColorSpaceUsingIntPtr(ptr,
+                        (uint)depthBytes.Length, depthMappedToColorPoints);
+                }
+            }
         }
 
         public void test()
         {
-            unsafe
+            for (int i = 0; i < bodies.Length; i++)
             {
-                fixed (byte* p = (&this.depthBytes[0]))
+                if (bodies[i].TrackingId == 0)
+                    continue;
+
+                HueHisto hhisto = UpBodyHueHisto(i);
+                using (BinaryWriter fs = new BinaryWriter(File.Open(@"C:\Users\koala\Documents\GitHub\GraduationDesign\Test\hist.txt", FileMode.Create)))
                 {
-                    
+                    fs.Write("Body " + i + ":\n");
+                    for (byte bin = 0; bin < HueHisto.Dimension; bin++)
+                    {
+                        fs.Write("bin " + bin + ":\t\t" + hhisto[bin] + "\n");
+                    }
                 }
             }
+        }
+
+        private DepthSpacePoint[] getJointsPosInColorSpace(int bodyIndex)
+        {
+            DepthSpacePoint[] jointsInDepthSpacePoints =new DepthSpacePoint[bodies[bodyIndex].Joints.Count];    
+            coordinateMapper.MapCameraPointsToDepthSpace(jointsInCameraSpace[bodyIndex], jointsInDepthSpacePoints);
+
+            return jointsInDepthSpacePoints;
+        }
+
+        /// <summary>
+        /// 返回包围盒，Tuple值类型为<左边界，上边界，右边界，下边界>
+        /// </summary>
+        /// <param name="joints">需要做包围盒的节点数组</param>
+        /// <returns></returns>
+        private Tuple<float, float, float, float> getBox(DepthSpacePoint[] joints)
+        {
+            IEnumerable<float> coorX = Enumerable.Select<DepthSpacePoint, float>(joints, (j) => j.X);
+            IEnumerable<float> coorY = Enumerable.Select<DepthSpacePoint, float>(joints, (j) => j.Y);
+
+            var rect = Tuple.Create<float, float, float, float>(coorX.Min(), coorY.Max(), coorX.Max(), coorY.Min());
+
+            return rect;
+        }
+
+        /// <summary>
+        /// 取上半身包围盒，先这么着吧，结构都搭好了再说
+        /// </summary>
+        /// <param name="joints">人体所有节点</param>
+        /// <returns></returns>
+        private Tuple<float, float, float, float> getUpBodyBox(DepthSpacePoint[] joints)
+        {
+            DepthSpacePoint[] upBodyJoints = new DepthSpacePoint[]
+            {
+                joints[(int)JointType.Neck], 
+                joints[(int)JointType.HandLeft], 
+                joints[(int)JointType.HandRight],
+                joints[(int)JointType.ShoulderLeft],
+                joints[(int)JointType.ShoulderRight],
+                joints[(int)JointType.SpineBase]
+            };
+
+            return getBox(upBodyJoints);
+        }
+
+        public HueHisto UpBodyHueHisto(int bodyIndex)
+        {
+            DepthSpacePoint[] jointsInDepthSpacePoints = getJointsPosInColorSpace(bodyIndex);
+            Tuple<float, float, float, float> rect = getUpBodyBox(jointsInDepthSpacePoints);
+            BitmapData bitmapData = this.colorBitmap.LockBits(new Rectangle(0, 0, colorBitmap.Width, colorBitmap.Height),
+                ImageLockMode.ReadOnly, colorBitmap.PixelFormat);
+            
+            HueHisto hhisto = new HueHisto();
+                            
+            for (float i = rect.Item4; i < rect.Item2+1; i++)
+            {
+                for (float j = rect.Item1; j < rect.Item3+1; j++)
+                {
+                    int depthX = (int)(j + 0.5);
+                    int depthY = (int)(i + 0.5);
+                    if ((depthX >= 0) && (depthX <= depthWidth) && (depthY >= 0) && (depthY <= depthHeight))
+                    {
+                        int depthIndex = depthY * depthWidth + depthX;
+                        if (bodyIndexBytes[depthIndex] == bodyIndex)
+                        {
+                            int colorX = (int)(depthMappedToColorPoints[depthIndex].X + 0.5);
+                            int colorY = (int)(depthMappedToColorPoints[depthIndex].Y + 0.5);
+
+                            unsafe
+                            {
+                                byte* p = (byte*)bitmapData.Scan0;
+                                int index = colorY * bitmapData.Stride + colorX * 3;
+                                int r = index, g = index + 1, b = index + 2;
+                                float hue = ColorConvertor.Instance.GetHue(*(p + r), *(p + g), *(p + b));
+                                byte bin = (byte)(hue / (360 / HueHisto.Dimension));
+                                hhisto[bin]++;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return hhisto;
         }
     }
 }

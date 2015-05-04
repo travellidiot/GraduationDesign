@@ -1,1 +1,4 @@
 *.suo
+*.exe
+*.config
+*.cache
