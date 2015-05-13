@@ -21,8 +21,10 @@ namespace FeatureExtracter
     {
         private KinectSensor kinectSensor = null;
         private CoordinateMapper coordinateMapper = null;
+
         private ColorSpacePoint[] depthMappedToColorPoints = null;
         private CameraSpacePoint[][] jointsInCameraSpace = null;
+
         private byte[] depthBytes = null;
         private ushort[] depthFrameBytes = null;
         private byte[] bodyIndexBytes = null;
@@ -38,7 +40,39 @@ namespace FeatureExtracter
             this.coordinateMapper = this.kinectSensor.CoordinateMapper;
         }
 
+        public void LoadColorFile(string colorFileName)
+        {
+            colorBitmap = new Bitmap(colorFileName);
+        }
 
+        public void LoadDepthFile(string depthFileName, int width, int height)
+        {
+            int bytesPerPixel = Marshal.SizeOf(typeof(ushort)) / Marshal.SizeOf(typeof(byte));
+            this.depthWidth = width;
+            this.depthHeight = height;
+            using (BinaryReader br = new BinaryReader(File.Open(depthFileName, FileMode.Open)))
+            {
+                this.depthBytes = br.ReadBytes(width * height * bytesPerPixel);
+                this.depthFrameBytes = new ushort[width * height];
+                Buffer.BlockCopy(this.depthBytes, 0, this.depthFrameBytes, 0, this.depthBytes.Length);
+            }
+        }
+
+        public void LoadDepthIndexFile(string depthIndexFileName, int width, int height)
+        {
+            using (BinaryReader br = new BinaryReader(File.Open(depthIndexFileName, FileMode.Open)))
+            {
+                this.bodyIndexBytes = br.ReadBytes(width * height);
+            }
+        }
+
+        public void LoadSkeletonFile(string skeletonFileName)
+        {
+            using (BodyReader br = new BodyReader(File.Open(skeletonFileName, FileMode.Open)))
+            {
+                this.bodies = br.ReadAllBodies();
+            }
+        }
         /// <summary>
         /// 载入提取特征需要的文件（彩色图像，深度数据，BodyIndex数据，骨骼数据）
         /// </summary>
@@ -46,32 +80,8 @@ namespace FeatureExtracter
         /// <param name="depthFileName">深度图像</param>
         /// <param name="depthIndexFileName">Body Index 图像</param>
         /// <param name="skeletonFileName">骨骼数据</param>
-        public void LoadFiles(string colorFileName, string depthFileName,
-                            string depthIndexFileName, string skeletonFileName)
+        public void Init()
         {
-            colorBitmap = new Bitmap(colorFileName);
-
-            int bytesPerPixel = Marshal.SizeOf(typeof(ushort)) / Marshal.SizeOf(typeof(byte));
-            using (BinaryReader br = new BinaryReader(File.Open(depthFileName, FileMode.Open)))
-            {
-                this.depthWidth = br.ReadInt32();
-                this.depthHeight = br.ReadInt32();
-                this.depthBytes = br.ReadBytes(this.depthWidth * this.depthHeight * bytesPerPixel);
-                this.depthFrameBytes = new ushort[this.depthBytes.Length / 2];
-                Buffer.BlockCopy(this.depthBytes, 0, this.depthFrameBytes, 0, this.depthBytes.Length);
-            }
-
-            using (BinaryReader br = new BinaryReader(File.Open(depthIndexFileName, FileMode.Open)))
-            {
-                int size = br.ReadInt32();
-                this.bodyIndexBytes = br.ReadBytes(size);
-            }
-
-            using (BodyReader br = new BodyReader(File.Open(skeletonFileName, FileMode.Open)))
-            {
-                this.bodies = br.ReadAllBodies();
-            }
-
             jointsInCameraSpace = new CameraSpacePoint[bodies.Length][];
             for (int i = 0; i < this.bodies.Length; i++)
             {
@@ -83,7 +93,7 @@ namespace FeatureExtracter
                 foreach (Joint joint in body.Joints.Values)
                 {
                     jointsInCameraSpace[i][(int)joint.JointType] = joint.Position;
-                    Debug.WriteLine("{0}, {1}, {2}", joint.Position.X, joint.Position.Y, joint.Position.Z);
+                    //Debug.WriteLine("{0}, {1}, {2}", joint.Position.X, joint.Position.Y, joint.Position.Z);
                 }
             }
             
@@ -100,7 +110,7 @@ namespace FeatureExtracter
                     continue;
                 }
 
-                Debug.WriteLine("{0}, {1}", i, bodies[i].TrackingId);
+                //Debug.WriteLine("{0}, {1}", i, bodies[i].TrackingId);
                 HistoTuple tuple = ExtractHistograms(i);
                 IHistogram<byte> hhisto = tuple.Item1;
                 using (BinaryWriter fs = new BinaryWriter(File.Open(@"V:\GitHub\kinect-picking\GraduationDesign\Test\hist.txt", FileMode.Append)))
@@ -210,22 +220,25 @@ namespace FeatureExtracter
         {
             DepthSpacePoint[] jointsInDepthSpacePoints = getJointsPosInColorSpace(bodyIndex);
             BoxRect upBodyRect = getUpBodyBox(jointsInDepthSpacePoints);
-            BoxRect downBodyRect = getDownBodyBox(jointsInDepthSpacePoints);
-            BoxRect leftFootRect = getLeftFootBox(jointsInDepthSpacePoints);
-            BoxRect rightFootRect = getRightFootBox(jointsInDepthSpacePoints);
+            //BoxRect downBodyRect = getDownBodyBox(jointsInDepthSpacePoints);
+            //BoxRect leftFootRect = getLeftFootBox(jointsInDepthSpacePoints);
+            //BoxRect rightFootRect = getRightFootBox(jointsInDepthSpacePoints);
 
             IHistogram<byte> upBodyHisto = BodyPartHueHisto(bodyIndex, upBodyRect);
-            IHistogram<byte> downBodyHisto = BodyPartHueHisto(bodyIndex, downBodyRect);
+            //IHistogram<byte> downBodyHisto = BodyPartHueHisto(bodyIndex, downBodyRect);
 
-            IHistogram<byte> leftFootHisto = BodyPartHueHisto(bodyIndex, leftFootRect);
-            IHistogram<byte> rightFootHisto = BodyPartHueHisto(bodyIndex, rightFootRect);
-            IHistogram<byte> footHisto = leftFootHisto.Merge(rightFootHisto);
-            leftFootHisto = null;
-            rightFootHisto = null;
+            //IHistogram<byte> leftFootHisto = BodyPartHueHisto(bodyIndex, leftFootRect);
+            //IHistogram<byte> rightFootHisto = BodyPartHueHisto(bodyIndex, rightFootRect);
+            //IHistogram<byte> footHisto = leftFootHisto.Merge(rightFootHisto);
+            //leftFootHisto = null;
+            //rightFootHisto = null;
+
+            HueHisto downBodyHisto = null;
+            HueHisto footHisto = null;
 
             upBodyHisto.Norm();
-            downBodyHisto.Norm();
-            footHisto.Norm();
+            //downBodyHisto.Norm();
+            //footHisto.Norm();
 
             return Tuple.Create<IHistogram<byte>, IHistogram<byte>, IHistogram<byte>>(upBodyHisto, downBodyHisto, footHisto);
         }
@@ -237,26 +250,32 @@ namespace FeatureExtracter
             
             HueHisto hhisto = new HueHisto();
 
-            Debug.WriteLine(rect);
-            for (float i = rect.Item4; i < rect.Item2+1; i++)
-            {
-                for (float j = rect.Item1; j < rect.Item3+1; j++)
-                {
-                    int depthX = (int)(j + 0.5);
-                    int depthY = (int)(i + 0.5);
-                    if ((depthX >= 0) && (depthX <= depthWidth) && (depthY >= 0) && (depthY <= depthHeight))
-                    {
-                        int depthIndex = depthY * depthWidth + depthX;
-                        if (bodyIndexBytes[depthIndex] == bodyIndex)
-                        {
-                            int colorX = (int)(depthMappedToColorPoints[depthIndex].X + 0.5);
-                            int colorY = (int)(depthMappedToColorPoints[depthIndex].Y + 0.5);
+            //Debug.WriteLine(rect);
 
-                            unsafe
+            unsafe
+            {
+                byte* p = (byte*)bitmapData.Scan0;
+
+                for (float i = rect.Item4; i < rect.Item2; i++)
+                {
+                    for (float j = rect.Item1; j < rect.Item3; j++)
+                    {
+                        int depthX = (int)(j + 0.5);
+                        int depthY = (int)(i + 0.5);
+                        if ((depthX >= 0) && (depthX <= depthWidth) && (depthY >= 0) && (depthY <= depthHeight))
+                        {
+                            int depthIndex = depthY * depthWidth + depthX;
+                            if (bodyIndexBytes[depthIndex] == bodyIndex)
                             {
-                                byte* p = (byte*)bitmapData.Scan0;
+                                int colorX = (int)(depthMappedToColorPoints[depthIndex].X + 0.5);
+                                int colorY = (int)(depthMappedToColorPoints[depthIndex].Y + 0.5);
+                                if (colorY >= bitmapData.Height)
+                                    colorY = bitmapData.Height-1;
+                                if (colorX >= bitmapData.Width)
+                                    colorX = bitmapData.Width-1;
                                 int index = colorY * bitmapData.Stride + colorX * 3;
                                 int r = index, g = index + 1, b = index + 2;
+                                Debug.WriteLine("{0}, {1}, {2}", colorX, colorY, index);
                                 float hue = ColorConvertor.Instance.GetHue(*(p + r), *(p + g), *(p + b));
                                 byte bin = (byte)(hue / (360 / HueHisto.Dimension));
                                 hhisto[bin]++;

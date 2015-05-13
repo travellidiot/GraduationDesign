@@ -13,3 +13,17 @@ C:\Users\LAZY\Desktop\Body Index Basics-WPF\BodyIndexBasics-WPF\obj\Debug\BodyIn
 C:\Users\LAZY\Desktop\Body Index Basics-WPF\BodyIndexBasics-WPF\obj\Debug\BodyIndexBasics-WPF.exe
 C:\Users\LAZY\Desktop\Body Index Basics-WPF\BodyIndexBasics-WPF\obj\Debug\BodyIndexBasics-WPF.pdb
 C:\Users\koala\Documents\GitHub\GraduationDesign\Body Index Basics-WPF\bin\AnyCPU\Debug\BodyIndexBasics-WPF.exe.config
+V:\GitHub\kinect-picking\GraduationDesign\Body Index Basics-WPF\bin\AnyCPU\Debug\BodyIndexBasics-WPF.exe.config
+V:\GitHub\kinect-picking\GraduationDesign\Body Index Basics-WPF\bin\AnyCPU\Debug\BodyIndexBasics-WPF.exe
+V:\GitHub\kinect-picking\GraduationDesign\Body Index Basics-WPF\bin\AnyCPU\Debug\BodyIndexBasics-WPF.pdb
+V:\GitHub\kinect-picking\GraduationDesign\Body Index Basics-WPF\bin\AnyCPU\Debug\Microsoft.Kinect.dll
+V:\GitHub\kinect-picking\GraduationDesign\Body Index Basics-WPF\bin\AnyCPU\Debug\Microsoft.Kinect.xml
+V:\GitHub\kinect-picking\GraduationDesign\Body Index Basics-WPF\obj\Debug\MainWindow.baml
+V:\GitHub\kinect-picking\GraduationDesign\Body Index Basics-WPF\obj\Debug\MainWindow.g.cs
+V:\GitHub\kinect-picking\GraduationDesign\Body Index Basics-WPF\obj\Debug\App.g.cs
+V:\GitHub\kinect-picking\GraduationDesign\Body Index Basics-WPF\obj\Debug\BodyIndexBasics-WPF_MarkupCompile.cache
+V:\GitHub\kinect-picking\GraduationDesign\Body Index Basics-WPF\obj\Debug\BodyIndexBasics-WPF.g.resources
+V:\GitHub\kinect-picking\GraduationDesign\Body Index Basics-WPF\obj\Debug\Microsoft.Samples.Kinect.BodyIndexBasics.Properties.Resources.resources
+V:\GitHub\kinect-picking\GraduationDesign\Body Index Basics-WPF\obj\Debug\BodyIndexBasics-WPF.csproj.GenerateResource.Cache
+V:\GitHub\kinect-picking\GraduationDesign\Body Index Basics-WPF\obj\Debug\BodyIndexBasics-WPF.exe
+V:\GitHub\kinect-picking\GraduationDesign\Body Index Basics-WPF\obj\Debug\BodyIndexBasics-WPF.pdb

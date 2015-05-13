@@ -7,6 +7,7 @@
 namespace Microsoft.Samples.Kinect.CoordinateMappingBasics
 {
     using System;
+    using System.Collections.Generic;
     using System.ComponentModel;
     using System.Diagnostics;
     using System.Globalization;
@@ -14,6 +15,7 @@ namespace Microsoft.Samples.Kinect.CoordinateMappingBasics
     using System.Windows;
     using System.Windows.Media;
     using System.Windows.Media.Imaging;
+    using System.Runtime.InteropServices;
     using Microsoft.Kinect;
     using FeatureExtracter;
 
@@ -50,17 +52,24 @@ namespace Microsoft.Samples.Kinect.CoordinateMappingBasics
         /// <summary>
         /// The size in bytes of the bitmap back buffer
         /// </summary>
-        private uint bitmapBackBufferSize = 0;
+        //private uint bitmapBackBufferSize = 0;
 
         /// <summary>
         /// Intermediate storage for the color to depth mapping
         /// </summary>
-        private DepthSpacePoint[] colorMappedToDepthPoints = null;
+        //private DepthSpacePoint[] colorMappedToDepthPoints = null;
 
         /// <summary>
         /// Current status text to display
         /// </summary>
         private string statusText = null;
+
+        private FrameDescription depthFrameDescription = null;
+
+        private Body[] bodies = null;
+        private byte[] depthBytes = null;
+        private byte[] bodyIndexBytes = null;
+        private uint[] bodyIndexPixels = null;
 
         /// <summary>
         /// Initializes a new instance of the MainWindow class.
@@ -69,28 +78,30 @@ namespace Microsoft.Samples.Kinect.CoordinateMappingBasics
         {
             this.kinectSensor = KinectSensor.GetDefault();
 
-            this.multiFrameSourceReader = this.kinectSensor.OpenMultiSourceFrameReader(FrameSourceTypes.Depth | FrameSourceTypes.Color | FrameSourceTypes.BodyIndex);
+            this.multiFrameSourceReader = this.kinectSensor.OpenMultiSourceFrameReader(FrameSourceTypes.Depth | FrameSourceTypes.Color | FrameSourceTypes.BodyIndex | FrameSourceTypes.Body);
 
             this.multiFrameSourceReader.MultiSourceFrameArrived += this.Reader_MultiSourceFrameArrived;
 
             this.coordinateMapper = this.kinectSensor.CoordinateMapper;
 
-            FrameDescription depthFrameDescription = this.kinectSensor.DepthFrameSource.FrameDescription;
-
-            int depthWidth = depthFrameDescription.Width;
-            int depthHeight = depthFrameDescription.Height;
+            this.depthFrameDescription = this.kinectSensor.DepthFrameSource.FrameDescription;
+            int depthWidth = this.depthFrameDescription.Width;
+            int depthHeight = this.depthFrameDescription.Height;
+            this.bodyIndexPixels = new uint[depthWidth * depthHeight];
+            this.depthBytes = new byte[depthWidth * depthHeight * this.depthFrameDescription.BytesPerPixel];
+            this.bodyIndexBytes = new byte[depthWidth * depthHeight];
 
             FrameDescription colorFrameDescription = this.kinectSensor.ColorFrameSource.FrameDescription;
 
             int colorWidth = colorFrameDescription.Width;
             int colorHeight = colorFrameDescription.Height;
 
-            this.colorMappedToDepthPoints = new DepthSpacePoint[colorWidth * colorHeight];
+            //this.colorMappedToDepthPoints = new DepthSpacePoint[colorWidth * colorHeight];
 
             this.bitmap = new WriteableBitmap(colorWidth, colorHeight, 96.0, 96.0, PixelFormats.Bgra32, null);
             
             // Calculate the WriteableBitmap back buffer size
-            this.bitmapBackBufferSize = (uint)((this.bitmap.BackBufferStride * (this.bitmap.PixelHeight - 1)) + (this.bitmap.PixelWidth * this.bytesPerPixel));
+            //this.bitmapBackBufferSize = (uint)((this.bitmap.BackBufferStride * (this.bitmap.PixelHeight - 1)) + (this.bitmap.PixelWidth * this.bytesPerPixel));
                                    
             this.kinectSensor.IsAvailableChanged += this.Sensor_IsAvailableChanged;
 
@@ -172,7 +183,24 @@ namespace Microsoft.Samples.Kinect.CoordinateMappingBasics
         /// <param name="e">event arguments</param>
         private void ScreenshotButton_Click(object sender, RoutedEventArgs e)
         {
-            
+            string myPhotos = @"V:\GitHub\kinect-picking\GraduationDesign\Data";
+            string bodyPath = Path.Combine(myPhotos, "BodyIndex-09-33-41.bi");
+            string skeletonPath = Path.Combine(myPhotos, "SkeletonData-09-33-41.skt");
+            string colorPath = Path.Combine(myPhotos, "ColorImage-09-33-41.png");
+            string depthPath = Path.Combine(myPhotos, "DepthData-09-33-41.dp");
+
+            FeatureExtracter extracter = new FeatureExtracter(this.kinectSensor);
+
+            extracter.LoadColorFile(colorPath);
+            int width = this.depthFrameDescription.Width;
+            int height = this.depthFrameDescription.Height;
+            extracter.LoadDepthFile(depthPath, width, height);
+            extracter.LoadDepthIndexFile(bodyPath, width, height);
+            extracter.LoadSkeletonFile(skeletonPath);
+
+            extracter.Init();
+
+            extracter.test();
 
             // Create a render target to which we'll render our composite image
             //RenderTargetBitmap renderBitmap = new RenderTargetBitmap((int)CompositeImage.ActualWidth, (int)CompositeImage.ActualHeight, 96.0, 96.0, PixelFormats.Pbgra32);
@@ -224,6 +252,7 @@ namespace Microsoft.Samples.Kinect.CoordinateMappingBasics
             DepthFrame depthFrame = null;
             ColorFrame colorFrame = null;
             BodyIndexFrame bodyIndexFrame = null;
+            BodyFrame bodyFrame = null;
             bool isBitmapLocked = false;
 
             MultiSourceFrame multiSourceFrame = e.FrameReference.AcquireFrame();           
@@ -241,53 +270,37 @@ namespace Microsoft.Samples.Kinect.CoordinateMappingBasics
                 depthFrame = multiSourceFrame.DepthFrameReference.AcquireFrame();
                 colorFrame = multiSourceFrame.ColorFrameReference.AcquireFrame();
                 bodyIndexFrame = multiSourceFrame.BodyIndexFrameReference.AcquireFrame();
+                bodyFrame = multiSourceFrame.BodyFrameReference.AcquireFrame();
 
                 // If any frame has expired by the time we process this event, return.
                 // The "finally" statement will Dispose any that are not null.
-                if ((depthFrame == null) || (colorFrame == null) || (bodyIndexFrame == null))
+                if ((depthFrame == null) || (colorFrame == null) || (bodyIndexFrame == null) || (bodyFrame == null))
                 {
                     return;
                 }
 
                 // Process Depth
-                FrameDescription depthFrameDescription = depthFrame.FrameDescription;
-
-                depthWidth = depthFrameDescription.Width;
-                depthHeight = depthFrameDescription.Height;
-
                 // Access the depth frame data directly via LockImageBuffer to avoid making a copy
                 using (KinectBuffer depthFrameData = depthFrame.LockImageBuffer())
                 {
-                    this.coordinateMapper.MapColorFrameToDepthSpaceUsingIntPtr(
-                        depthFrameData.UnderlyingBuffer,
-                        depthFrameData.Size,
-                        this.colorMappedToDepthPoints);
-
-                    unsafe
-                    {
-                        ushort* ptr = (ushort*)depthFrameData.UnderlyingBuffer;
-                        for (int i = 0; i < depthFrameData.Size; i++)
-                        {
-                            if (ptr[i] != 0)
-                            {
-                                Debug.WriteLine("YYYYYYYYYY");
-                            }
-                        }
-                    }
+                    //this.coordinateMapper.MapColorFrameToDepthSpaceUsingIntPtr(
+                    //    depthFrameData.UnderlyingBuffer,
+                    //    depthFrameData.Size,
+                    //    this.colorMappedToDepthPoints);
+                    Marshal.Copy(depthFrameData.UnderlyingBuffer, this.depthBytes, 0, (int)depthFrameData.Size);
+                    
                 }
-
                 // We're done with the DepthFrame 
                 depthFrame.Dispose();
                 depthFrame = null;
 
-                // Process Color
 
+                // Process Color
                 // Lock the bitmap for writing
                 this.bitmap.Lock();
                 isBitmapLocked = true;
-
-                colorFrame.CopyConvertedFrameDataToIntPtr(this.bitmap.BackBuffer, this.bitmapBackBufferSize, ColorImageFormat.Bgra);
-
+                uint size = (uint)((this.bitmap.BackBufferStride * (this.bitmap.PixelHeight - 1)) + (this.bitmap.PixelWidth * this.bytesPerPixel));
+                colorFrame.CopyConvertedFrameDataToIntPtr(this.bitmap.BackBuffer, size, ColorImageFormat.Bgra);
                 // We're done with the ColorFrame 
                 colorFrame.Dispose();
                 colorFrame = null;
@@ -295,52 +308,19 @@ namespace Microsoft.Samples.Kinect.CoordinateMappingBasics
                 // We'll access the body index data directly to avoid a copy
                 using (KinectBuffer bodyIndexData = bodyIndexFrame.LockImageBuffer())
                 {
-                    unsafe
-                    {
-                        byte* bodyIndexDataPointer = (byte*)bodyIndexData.UnderlyingBuffer;
-
-                        int colorMappedToDepthPointCount = this.colorMappedToDepthPoints.Length;
-
-                        fixed (DepthSpacePoint* colorMappedToDepthPointsPointer = this.colorMappedToDepthPoints)
-                        {
-                            // Treat the color data as 4-byte pixels
-                            uint* bitmapPixelsPointer = (uint*)this.bitmap.BackBuffer;
-
-                            // Loop over each row and column of the color image
-                            // Zero out any pixels that don't correspond to a body index
-                            for (int colorIndex = 0; colorIndex < colorMappedToDepthPointCount; ++colorIndex)
-                            {
-                                float colorMappedToDepthX = colorMappedToDepthPointsPointer[colorIndex].X;
-                                float colorMappedToDepthY = colorMappedToDepthPointsPointer[colorIndex].Y;
-
-                                // The sentinel value is -inf, -inf, meaning that no depth pixel corresponds to this color pixel.
-                                if (!float.IsNegativeInfinity(colorMappedToDepthX) &&
-                                    !float.IsNegativeInfinity(colorMappedToDepthY))
-                                {
-                                    // Make sure the depth pixel maps to a valid point in color space
-                                    int depthX = (int)(colorMappedToDepthX + 0.5f);
-                                    int depthY = (int)(colorMappedToDepthY + 0.5f);
-
-                                    // If the point is not valid, there is no body index there.
-                                    if ((depthX >= 0) && (depthX < depthWidth) && (depthY >= 0) && (depthY < depthHeight))
-                                    {
-                                        int depthIndex = (depthY * depthWidth) + depthX;
-
-                                        // If we are tracking a body for the current pixel, do not zero out the pixel
-                                        if (bodyIndexDataPointer[depthIndex] != 0xff)
-                                        {
-                                            continue;
-                                        }
-                                    }
-                                }
-
-                                bitmapPixelsPointer[colorIndex] = 0;
-                            }
-                        }
-
-                        this.bitmap.AddDirtyRect(new Int32Rect(0, 0, this.bitmap.PixelWidth, this.bitmap.PixelHeight));
-                    }
+                    Marshal.Copy(bodyIndexData.UnderlyingBuffer, this.bodyIndexBytes, 0, (int)bodyIndexData.Size);
                 }
+
+
+                // Process Body
+                if (this.bodies == null)
+                {
+                    this.bodies = new Body[bodyFrame.BodyCount];
+                }
+                bodyFrame.GetAndRefreshBodyData(this.bodies);
+                // Done with the BodyFrame
+                bodyFrame.Dispose();  
+                bodyFrame = null;
             }
             finally
             {
@@ -363,7 +343,71 @@ namespace Microsoft.Samples.Kinect.CoordinateMappingBasics
                 {
                     bodyIndexFrame.Dispose();
                 }
+
+                if (bodyFrame != null)
+                {
+                    bodyFrame.Dispose();
+                }
             }
+        }
+
+        private void SaveColorData(BitmapFrame colorFrame, string colorPath)
+        {
+            using (FileStream fs = new FileStream(colorPath, FileMode.Create))
+            {
+                BitmapEncoder encoder = new PngBitmapEncoder();
+                encoder.Frames.Add(colorFrame);
+                encoder.Save(fs);
+            }
+        }
+
+        private void SaveDepthData(byte[] depthBytes, string depthPath)
+        {
+             using (BinaryWriter bw = new BinaryWriter(File.Open(depthPath, FileMode.Create)))
+             {
+                 bw.Write(depthBytes);
+             }
+        }
+
+        private void SaveSkeletonData(Body[] bodies, string skeletonPath)
+        {
+            using (BinaryWriter bw = new BinaryWriter(File.Open(skeletonPath, FileMode.Create)))
+            {
+                foreach (Body body in bodies)
+                {
+                    ulong idx = body.TrackingId;
+                    bw.Write(idx);
+
+                    IReadOnlyDictionary<JointType, Joint> Joints = body.Joints;
+                    foreach (var joint in Joints.Values)
+                    {
+                        byte[] jointBytes = SBConvertor.Instance.StructToBytes(joint);
+                        bw.Write(jointBytes);
+                    }
+                }
+            }
+        }
+
+        private void SaveMultiSourceData(BitmapFrame colorFrame, byte[] depthBytes, byte[] bodyIndexBytes, Body[] bodies)
+        {
+            string time = System.DateTime.UtcNow.ToString("hh'-'mm'-'ss", CultureInfo.CurrentUICulture.DateTimeFormat);
+            string myPhotos = @"V:\GitHub\kinect-picking\GraduationDesign\Data";
+            string bodyPath = Path.Combine(myPhotos, "BodyIndex-" + time + ".bi");
+            string skeletonPath = Path.Combine(myPhotos, "SkeletonData-" + time + ".skt");
+            string colorPath = Path.Combine(myPhotos, "ColorImage-" + time + ".png");
+            string depthPath = Path.Combine(myPhotos, "DepthData-" + time + ".dp");
+
+            // 保存彩色图像
+            SaveColorData(colorFrame, colorPath);
+
+            // 保存人编号数据流
+            SaveDepthData(bodyIndexBytes, bodyPath);
+
+            // 保存深度数据
+            SaveDepthData(depthBytes, depthPath);
+
+            // 保存人体骨骼数据
+            SaveSkeletonData(bodies, skeletonPath);
         }
 
         /// <summary>

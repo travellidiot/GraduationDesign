@@ -106,7 +106,6 @@ namespace FeatureExtracter
         public static readonly int Dimension = 180;
 
         private float[] hhisto = null;
-        private int sum = 0;
         
         public HueHisto()
         {
@@ -133,6 +132,7 @@ namespace FeatureExtracter
         /// </summary>
         public void Norm()
         {
+            float sum = hhisto.Sum();
             if (!Normalized)
             {
                 for (int i = 0; i < Dimension; i++)

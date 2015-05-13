@@ -1,2 +1,0 @@
-c:\users\koala\documents\visual studio 2013\Projects\FeatureExtracter\FeatureExtracter\bin\Debug\FeatureExtracter.exe.config
-C:\Users\koala\Documents\GitHub\GraduationDesign\FeatureExtracter\FeatureExtracter\bin\Debug\FeatureExtracter.exe.config

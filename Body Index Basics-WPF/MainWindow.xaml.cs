@@ -119,6 +119,7 @@ namespace Microsoft.Samples.Kinect.BodyIndexBasics
             
             this.multiSourceFrameReader = this.kinectSensor.OpenMultiSourceFrameReader(FrameSourceTypes.Color |
                                                                                        FrameSourceTypes.BodyIndex |
+                                                                                       FrameSourceTypes.Depth|
                                                                                        FrameSourceTypes.Body);
 
             this.multiSourceFrameReader.MultiSourceFrameArrived += Reader_MultiSourceFrameArrived;
@@ -216,32 +217,16 @@ namespace Microsoft.Samples.Kinect.BodyIndexBasics
             // 处理深度图像
             using (DepthFrame depthFrame = multiSourceFrame.DepthFrameReference.AcquireFrame())
             {
-                if (depthFrame == null)
+                if (depthFrame != null)
                 {
-                    // System.Diagnostics.Debug.WriteLine("Null dpF!");
-                }
-                else
-                {
-                    depthFrameDescription = depthFrame.FrameDescription;
                     using (KinectBuffer depthBuffer = depthFrame.LockImageBuffer())
                     {
                         Marshal.Copy(depthBuffer.UnderlyingBuffer, this.depthBytes, 0, (int)depthBuffer.Size);
-                        unsafe
-                        {
-                            ushort* ptr = (ushort*)depthBuffer.UnderlyingBuffer;
-                            for (int i = 0; i < depthBuffer.Size / 2; i++)
-                            {
-                                if (ptr[i] != 0)
-                                {
-                                    Debug.WriteLine("YYYYYY");
-                                }
-                                else
-                                {
-                                    Debug.WriteLine("NNNNN");
-                                }
-                            }
-                        }
                     }
+                }
+                else
+                {
+                    // System.Diagnostics.Debug.WriteLine("Null dpF!");
                 }
             }
 

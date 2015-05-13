@@ -17,10 +17,10 @@ namespace TestReader
         static void Main(string[] args)
         {
             string myPhotos = @"V:\GitHub\kinect-picking\GraduationDesign\Data";
-            string bodyPath = Path.Combine(myPhotos, "BodyIndex.bi");
-            string skeletonPath = Path.Combine(myPhotos, "SkeletonData.skt");
+            string bodyPath = Path.Combine(myPhotos, "BodyIndex-09-33-41.bi");
+            string skeletonPath = Path.Combine(myPhotos, "SkeletonData-09-33-41.skt");
             string colorPath = Path.Combine(myPhotos, "ColorImage.png");
-            string depthPath = Path.Combine(myPhotos, "DepthData.dp");
+            string depthPath = Path.Combine(myPhotos, "DepthData-09-33-41.dp");
 
             try
             {
@@ -54,9 +54,7 @@ namespace TestReader
                 // 测试bodyIndex数据读取
                 //using (BinaryReader br = new BinaryReader(File.Open(bodyPath, FileMode.Open)))
                 //{
-                //    int size = br.ReadInt32();
-                //    Console.WriteLine("Tht size: {0}", size);
-                //    for (int i = 0; i < size; i++)
+                //    for (int i = 0; ; i++)
                 //    {
                 //        byte bt = br.ReadByte();
                 //        Console.Write("{0} ", bt);
@@ -67,11 +65,7 @@ namespace TestReader
                 // 测试深度数据
                 using (BinaryReader br = new BinaryReader(File.Open(depthPath, FileMode.Open)))
                 {
-                    int width, height;
-                    width = br.ReadInt32();
-                    height = br.ReadInt32();
-
-                    for (int i = 0; i < width * height; i++)
+                    for (int i = 0; ; i++)
                     {
                         ushort pixel = br.ReadUInt16();
                         if (pixel != 0)
@@ -81,18 +75,18 @@ namespace TestReader
                 }
 
                 // 测试骨骼数据读取
-                //using (BodyReader br = new BodyReader(File.Open(skeletonPath, FileMode.Open)))
-                //{
-                //    BodyData[] bodies = br.ReadAllBodies();
-                //    for (int i = 0; i < bodies.Length; i++)
-                //    {
-                //        Console.WriteLine("BodyIndex:  {0}", bodies[i].TrackingId);
-                //        foreach (Joint joint in bodies[i].Joints.Values)
-                //        {
-                //            Console.WriteLine("{0}:\t({1}, {2}, {3})", joint.JointType, joint.Position.X, joint.Position.Y, joint.Position.Z);
-                //        }
-                //    }
-                //}
+                using (BodyReader br = new BodyReader(File.Open(skeletonPath, FileMode.Open)))
+                {
+                    BodyData[] bodies = br.ReadAllBodies();
+                    for (int i = 0; i < bodies.Length; i++)
+                    {
+                        Console.WriteLine("BodyIndex:  {0}", bodies[i].TrackingId);
+                        foreach (Joint joint in bodies[i].Joints.Values)
+                        {
+                            Console.WriteLine("{0}:\t({1}, {2}, {3})", joint.JointType, joint.Position.X, joint.Position.Y, joint.Position.Z);
+                        }
+                    }
+                }
             }
             catch (EndOfStreamException)
             {
