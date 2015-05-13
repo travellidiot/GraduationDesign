@@ -82,13 +82,24 @@ namespace FeatureExtracter
         /// <summary>
         /// 计算与另一个直方图的距离
         /// </summary>
-        /// <param name="histo"></param>
+        /// <param name="histo">另一个直方图</param>
         /// <returns></returns>
         double DistanceTo(IHistogram<T> histo);
+        /// <summary>
+        /// 合并两个直方图，两个直方图必须都未归一化
+        /// </summary>
+        /// <param name="histo">另一个直方图</param>
+        IHistogram<T> Merge(IHistogram<T> histo);
     }
 
     public class HueHisto : IHistogram<byte>
     {
+        class HistogramException : Exception
+        {
+            protected HistogramException() : base() { }
+            public HistogramException(string message) : base(message) { }
+        }
+        
         /// <summary>
         /// Hue直方图的维度，即bin的数量
         /// </summary>
@@ -144,6 +155,11 @@ namespace FeatureExtracter
         /// <returns>两个直方图的距离</returns>
         public double DistanceTo(IHistogram<byte> other)
         {
+            if (!Normalized || !other.Normalized)
+            {
+                throw new HistogramException("The histogram should be normalized before calculating distance");
+            }
+                
             float sum = 0;
             for (int i = 0; i < Dimension; i++)
             {
@@ -153,5 +169,37 @@ namespace FeatureExtracter
 
             return Math.Sqrt(sum);
         }
+
+        public IHistogram<byte> Merge(IHistogram<byte> other)
+        {
+            if (Normalized || other.Normalized)
+            {
+                throw new HistogramException("Normalized histogram can not be merged");
+            }
+
+            HueHisto h = new HueHisto();
+            for (byte i = 0; i < Dimension; i++)
+            {
+                h[i] = hhisto[i] + other[i];
+            }
+
+            return h;
+        }
+
+        public HueHisto GetCumHueHisto()
+        {
+            if (!Normalized)
+                this.Norm();
+
+            HueHisto h = new HueHisto();
+            h[0] = hhisto[0];
+            for (byte i = 1; i < Dimension; i++)
+            {
+                h[i] = h[(byte)(i-1)] + hhisto[i];
+            }
+
+            return h;
+        }
     }
+
 }
