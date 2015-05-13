@@ -172,7 +172,6 @@ namespace Microsoft.Samples.Kinect.CoordinateMappingBasics
         /// <param name="e">event arguments</param>
         private void ScreenshotButton_Click(object sender, RoutedEventArgs e)
         {
-            FeatureExtracter extracter = new FeatureExtracter(this.kinectSensor);
             
 
             // Create a render target to which we'll render our composite image
@@ -263,6 +262,18 @@ namespace Microsoft.Samples.Kinect.CoordinateMappingBasics
                         depthFrameData.UnderlyingBuffer,
                         depthFrameData.Size,
                         this.colorMappedToDepthPoints);
+
+                    unsafe
+                    {
+                        ushort* ptr = (ushort*)depthFrameData.UnderlyingBuffer;
+                        for (int i = 0; i < depthFrameData.Size; i++)
+                        {
+                            if (ptr[i] != 0)
+                            {
+                                Debug.WriteLine("YYYYYYYYYY");
+                            }
+                        }
+                    }
                 }
 
                 // We're done with the DepthFrame 

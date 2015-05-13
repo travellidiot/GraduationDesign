@@ -218,22 +218,10 @@ namespace Microsoft.Samples.Kinect.BodyIndexBasics
             {
                 if (depthFrame == null)
                 {
-                    System.Diagnostics.Debug.WriteLine("Null dpF!");
+                    // System.Diagnostics.Debug.WriteLine("Null dpF!");
                 }
                 else
                 {
-                    unsafe
-                    {
-                        KinectBuffer buffer = depthFrame.LockImageBuffer();
-                        ushort* begin = (ushort*)buffer.UnderlyingBuffer;
-                        for (int i = 0; i < buffer.Size; i++)
-                        {
-                            //System.Diagnostics.Debug.WriteLine(begin[i]);
-                            System.Diagnostics.Debug.WriteLine("Not null!");
-                            System.Diagnostics.Debug.WriteLine(begin[i]);
-                            //Console.WriteLine(begin[i]);
-                        }
-                    }
                     depthFrameDescription = depthFrame.FrameDescription;
                     using (KinectBuffer depthBuffer = depthFrame.LockImageBuffer())
                     {
@@ -246,6 +234,10 @@ namespace Microsoft.Samples.Kinect.BodyIndexBasics
                                 if (ptr[i] != 0)
                                 {
                                     Debug.WriteLine("YYYYYY");
+                                }
+                                else
+                                {
+                                    Debug.WriteLine("NNNNN");
                                 }
                             }
                         }
