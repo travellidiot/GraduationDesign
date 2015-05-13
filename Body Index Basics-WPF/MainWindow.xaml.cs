@@ -216,18 +216,44 @@ namespace Microsoft.Samples.Kinect.BodyIndexBasics
             // 处理深度图像
             using (DepthFrame depthFrame = multiSourceFrame.DepthFrameReference.AcquireFrame())
             {
-                if (depthFrame != null)
+                if (depthFrame == null)
                 {
+                    System.Diagnostics.Debug.WriteLine("Null dpF!");
+                }
+                else
+                {
+                    unsafe
+                    {
+                        KinectBuffer buffer = depthFrame.LockImageBuffer();
+                        ushort* begin = (ushort*)buffer.UnderlyingBuffer;
+                        for (int i = 0; i < buffer.Size; i++)
+                        {
+                            //System.Diagnostics.Debug.WriteLine(begin[i]);
+                            System.Diagnostics.Debug.WriteLine("Not null!");
+                            System.Diagnostics.Debug.WriteLine(begin[i]);
+                            //Console.WriteLine(begin[i]);
+                        }
+                    }
                     depthFrameDescription = depthFrame.FrameDescription;
                     using (KinectBuffer depthBuffer = depthFrame.LockImageBuffer())
                     {
                         Marshal.Copy(depthBuffer.UnderlyingBuffer, this.depthBytes, 0, (int)depthBuffer.Size);
+                        unsafe
+                        {
+                            ushort* ptr = (ushort*)depthBuffer.UnderlyingBuffer;
+                            for (int i = 0; i < depthBuffer.Size / 2; i++)
+                            {
+                                if (ptr[i] != 0)
+                                {
+                                    Debug.WriteLine("YYYYYY");
+                                }
+                            }
+                        }
                     }
                 }
             }
 
             bool bodyIndexFrameProcessed = false;
-            Debug.WriteLine("depth bytes: {0}", depthBytes.Length);
 
             // 处理BodyIndex数据流
             using (BodyIndexFrame bodyIndexFrame = multiSourceFrame.BodyIndexFrameReference.AcquireFrame())
@@ -493,6 +519,7 @@ namespace Microsoft.Samples.Kinect.BodyIndexBasics
         {
             using (BinaryWriter bw = new BinaryWriter(File.Open(depthPath, FileMode.Create)))
             {
+                
                 bw.Write(width);
                 bw.Write(height);
                 bw.Write(depthBytes);

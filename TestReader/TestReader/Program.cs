@@ -65,33 +65,34 @@ namespace TestReader
                 //}
 
                 // 测试深度数据
-                //using (BinaryReader br = new BinaryReader(File.Open(depthPath, FileMode.Open)))
-                //{
-                //    int width, height;
-                //    width = br.ReadInt32();
-                //    height = br.ReadInt32();
+                using (BinaryReader br = new BinaryReader(File.Open(depthPath, FileMode.Open)))
+                {
+                    int width, height;
+                    width = br.ReadInt32();
+                    height = br.ReadInt32();
 
-                //    for (int i = 0; i < width * height; i++)
-                //    {
-                //        ushort pixel = br.ReadUInt16();
-                //        Console.Write("{0} ", pixel);
-                //    }
-                //    Console.Write("\n\n\n");
-                //}
+                    for (int i = 0; i < width * height; i++)
+                    {
+                        ushort pixel = br.ReadUInt16();
+                        if (pixel != 0)
+                            Console.Write("{0} ", pixel);
+                    }
+                    Console.Write("\n\n\n");
+                }
 
                 // 测试骨骼数据读取
-                using (BodyReader br = new BodyReader(File.Open(skeletonPath, FileMode.Open)))
-                {
-                    BodyData[] bodies = br.ReadAllBodies();
-                    for (int i = 0; i < bodies.Length; i++)
-                    {
-                        Console.WriteLine("BodyIndex:  {0}", bodies[i].TrackingId);
-                        foreach (Joint joint in bodies[i].Joints.Values)
-                        {
-                            Console.WriteLine("{0}:\t({1}, {2}, {3})", joint.JointType, joint.Position.X, joint.Position.Y, joint.Position.Z);
-                        }
-                    }
-                }
+                //using (BodyReader br = new BodyReader(File.Open(skeletonPath, FileMode.Open)))
+                //{
+                //    BodyData[] bodies = br.ReadAllBodies();
+                //    for (int i = 0; i < bodies.Length; i++)
+                //    {
+                //        Console.WriteLine("BodyIndex:  {0}", bodies[i].TrackingId);
+                //        foreach (Joint joint in bodies[i].Joints.Values)
+                //        {
+                //            Console.WriteLine("{0}:\t({1}, {2}, {3})", joint.JointType, joint.Position.X, joint.Position.Y, joint.Position.Z);
+                //        }
+                //    }
+                //}
             }
             catch (EndOfStreamException)
             {

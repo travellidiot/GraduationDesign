@@ -1,0 +1,192 @@
+
+Boddy 2:
+
+bin 0:	0
+
+bin 1:	0
+
+bin 2:	0
+
+bin 3:	0
+
+bin 4:	0
+
+bin 5:	0
+
+bin 6:	0
+
+bin 7:	0
+
+bin 8:	0
+
+bin 9:	0
+bin 10:	0
+bin 11:	0
+bin 12:	0
+bin 13:	0
+bin 14:	0
+bin 15:	0
+bin 16:	0
+bin 17:	0
+bin 18:	0
+bin 19:	0
+bin 20:	0
+bin 21:	0
+bin 22:	0
+bin 23:	0
+bin 24:	0
+bin 25:	0
+bin 26:	0
+bin 27:	0
+bin 28:	0
+bin 29:	0
+bin 30:	0
+bin 31:	0
+bin 32:	0
+bin 33:	0
+bin 34:	0
+bin 35:	0
+bin 36:	0
+bin 37:	0
+bin 38:	0
+bin 39:	0
+bin 40:	0
+bin 41:	0
+bin 42:	0
+bin 43:	0
+bin 44:	0
+bin 45:	0
+bin 46:	0
+bin 47:	0
+bin 48:	0
+bin 49:	0
+bin 50:	0
+bin 51:	0
+bin 52:	0
+bin 53:	0
+bin 54:	0
+bin 55:	0
+bin 56:	0
+bin 57:	0
+bin 58:	0
+bin 59:	0
+bin 60:	2751
+bin 61:	0
+bin 62:	0
+bin 63:	0
+bin 64:	0
+bin 65:	0
+bin 66:	0
+bin 67:	0
+bin 68:	0
+bin 69:	0
+bin 70:	0
+bin 71:	0
+bin 72:	0
+bin 73:	0
+bin 74:	0
+bin 75:	0
+bin 76:	0
+bin 77:	0
+bin 78:	0
+bin 79:	0
+bin 80:	0
+bin 81:	0
+bin 82:	0
+bin 83:	0
+bin 84:	0
+bin 85:	0
+bin 86:	0
+bin 87:	0
+bin 88:	0
+bin 89:	0
+bin 90:	0
+bin 91:	0
+bin 92:	0
+bin 93:	0
+bin 94:	0
+bin 95:	0
+bin 96:	0
+bin 97:	0
+bin 98:	0
+bin 99:	0
+bin 100:	0
+bin 101:	0
+bin 102:	0
+bin 103:	0
+bin 104:	0
+bin 105:	0
+bin 106:	0
+bin 107:	0
+bin 108:	0
+bin 109:	0
+bin 110:	0
+bin 111:	0
+bin 112:	0
+bin 113:	0
+bin 114:	0
+bin 115:	0
+bin 116:	0
+bin 117:	0
+bin 118:	0
+bin 119:	0
+bin 120:	0
+bin 121:	0
+bin 122:	0
+bin 123:	0
+bin 124:	0
+bin 125:	0
+bin 126:	0
+bin 127:	0
+bin 128:	0
+bin 129:	0
+bin 130:	0
+bin 131:	0
+bin 132:	0
+bin 133:	0
+bin 134:	0
+bin 135:	0
+bin 136:	0
+bin 137:	0
+bin 138:	0
+bin 139:	0
+bin 140:	0
+bin 141:	0
+bin 142:	0
+bin 143:	0
+bin 144:	0
+bin 145:	0
+bin 146:	0
+bin 147:	0
+bin 148:	0
+bin 149:	0
+bin 150:	0
+bin 151:	0
+bin 152:	0
+bin 153:	0
+bin 154:	0
+bin 155:	0
+bin 156:	0
+bin 157:	0
+bin 158:	0
+bin 159:	0
+bin 160:	0
+bin 161:	0
+bin 162:	0
+bin 163:	0
+bin 164:	0
+bin 165:	0
+bin 166:	0
+bin 167:	0
+bin 168:	0
+bin 169:	0
+bin 170:	0
+bin 171:	0
+bin 172:	0
+bin 173:	0
+bin 174:	0
+bin 175:	0
+bin 176:	0
+bin 177:	0
+bin 178:	0
+bin 179:	0
