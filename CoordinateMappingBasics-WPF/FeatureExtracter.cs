@@ -10,8 +10,13 @@ using System.Drawing.Imaging;
 using System.Diagnostics;
 using Microsoft.Kinect;
 
+
 namespace FeatureExtracter
 {
+
+    using BoxRect = Tuple<float, float, float, float>;
+    using HistoTuple = Tuple<IHistogram<byte>, IHistogram<byte>, IHistogram<byte>>;
+
     public class FeatureExtracter
     {
         private KinectSensor kinectSensor = null;
@@ -96,7 +101,8 @@ namespace FeatureExtracter
                 }
 
                 Debug.WriteLine("{0}, {1}", i, bodies[i].TrackingId);
-                HueHisto hhisto = UpBodyHueHisto(i);
+                HistoTuple tuple = ExtractHistograms(i);
+                IHistogram<byte> hhisto = tuple.Item1;
                 using (BinaryWriter fs = new BinaryWriter(File.Open(@"V:\GitHub\kinect-picking\GraduationDesign\Test\hist.txt", FileMode.Append)))
                 {
                     string line = "Boddy " + i.ToString() + ":\r\n";
@@ -123,7 +129,7 @@ namespace FeatureExtracter
         /// </summary>
         /// <param name="joints">需要做包围盒的节点数组</param>
         /// <returns></returns>
-        private Tuple<float, float, float, float> getBox(DepthSpacePoint[] joints)
+        private BoxRect getBox(DepthSpacePoint[] joints)
         {
             IEnumerable<float> coorX = Enumerable.Select<DepthSpacePoint, float>(joints, (j) => j.X);
             IEnumerable<float> coorY = Enumerable.Select<DepthSpacePoint, float>(joints, (j) => j.Y);
@@ -138,7 +144,7 @@ namespace FeatureExtracter
         /// </summary>
         /// <param name="joints">人体所有节点</param>
         /// <returns></returns>
-        private Tuple<float, float, float, float> getUpBodyBox(DepthSpacePoint[] joints)
+        private BoxRect getUpBodyBox(DepthSpacePoint[] joints)
         {
             DepthSpacePoint[] upBodyJoints = new DepthSpacePoint[]
             {
@@ -153,10 +159,79 @@ namespace FeatureExtracter
             return getBox(upBodyJoints);
         }
 
-        public HueHisto UpBodyHueHisto(int bodyIndex)
+        private BoxRect getDownBodyBox(DepthSpacePoint[] joints)
+        {
+            DepthSpacePoint[] downBodyJoints = new DepthSpacePoint[]
+            {
+                joints[(int)JointType.HipLeft],
+                joints[(int)JointType.KneeLeft],
+                joints[(int)JointType.AnkleLeft],
+                joints[(int)JointType.HipRight],
+                joints[(int)JointType.KneeRight],
+                joints[(int)JointType.AnkleRight]
+            };
+
+            return getBox(downBodyJoints);
+        }
+
+        private BoxRect getLeftFootBox(DepthSpacePoint[] joints)
+        {
+            DepthSpacePoint ankleLeft = joints[(int)JointType.AnkleLeft];
+            DepthSpacePoint footLeft = joints[(int)JointType.FootLeft];
+            DepthSpacePoint footTipLeft;
+            footTipLeft.X = 2 * footLeft.X - ankleLeft.X;
+            footTipLeft.Y = 2 * footLeft.Y - ankleLeft.Y;
+
+            DepthSpacePoint[] leftFootJoints = new DepthSpacePoint[]
+            {
+                ankleLeft, footLeft, footTipLeft
+            };
+
+            return getBox(leftFootJoints);
+        }
+
+        private BoxRect getRightFootBox(DepthSpacePoint[] joints)
+        {
+            DepthSpacePoint ankleRight = joints[(int)JointType.AnkleRight];
+            DepthSpacePoint footRight = joints[(int)JointType.FootRight];
+            DepthSpacePoint footTipRight;
+            footTipRight.X = 2 * footRight.X - ankleRight.X;
+            footTipRight.Y = 2 * footRight.Y - ankleRight.Y;
+
+            DepthSpacePoint[] leftFootJoints = new DepthSpacePoint[]
+            {
+                ankleRight, footRight, footTipRight
+            };
+
+            return getBox(leftFootJoints);
+        }
+
+        public HistoTuple ExtractHistograms(int bodyIndex)
         {
             DepthSpacePoint[] jointsInDepthSpacePoints = getJointsPosInColorSpace(bodyIndex);
-            Tuple<float, float, float, float> rect = getUpBodyBox(jointsInDepthSpacePoints);
+            BoxRect upBodyRect = getUpBodyBox(jointsInDepthSpacePoints);
+            BoxRect downBodyRect = getDownBodyBox(jointsInDepthSpacePoints);
+            BoxRect leftFootRect = getLeftFootBox(jointsInDepthSpacePoints);
+            BoxRect rightFootRect = getRightFootBox(jointsInDepthSpacePoints);
+
+            IHistogram<byte> upBodyHisto = BodyPartHueHisto(bodyIndex, upBodyRect);
+            IHistogram<byte> downBodyHisto = BodyPartHueHisto(bodyIndex, downBodyRect);
+
+            IHistogram<byte> leftFootHisto = BodyPartHueHisto(bodyIndex, leftFootRect);
+            IHistogram<byte> rightFootHisto = BodyPartHueHisto(bodyIndex, rightFootRect);
+            IHistogram<byte> footHisto = leftFootHisto.Merge(rightFootHisto);
+            leftFootHisto = null;
+            rightFootHisto = null;
+
+            upBodyHisto.Norm();
+            downBodyHisto.Norm();
+            footHisto.Norm();
+
+            return Tuple.Create<IHistogram<byte>, IHistogram<byte>, IHistogram<byte>>(upBodyHisto, downBodyHisto, footHisto);
+        }
+
+        private HueHisto BodyPartHueHisto(int bodyIndex, BoxRect rect)
+        {
             BitmapData bitmapData = this.colorBitmap.LockBits(new Rectangle(0, 0, colorBitmap.Width, colorBitmap.Height),
                 ImageLockMode.ReadOnly, colorBitmap.PixelFormat);
             
