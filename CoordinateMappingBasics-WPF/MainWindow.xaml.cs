@@ -16,7 +16,14 @@ namespace Microsoft.Samples.Kinect.CoordinateMappingBasics
     using System.Windows.Media;
     using System.Windows.Media.Imaging;
     using System.Runtime.InteropServices;
+    using System.Drawing;
+    using System.Drawing.Imaging;
     using Microsoft.Kinect;
+    using Emgu.CV;
+    using Emgu.CV.UI;
+    using Emgu.CV.Structure;
+    using Emgu.Util;
+    
     using FeatureExtracter;
 
     /// <summary>
@@ -65,11 +72,15 @@ namespace Microsoft.Samples.Kinect.CoordinateMappingBasics
         private string statusText = null;
 
         private FrameDescription depthFrameDescription = null;
+        VideoWriter videoWriter = null;
 
         private Body[] bodies = null;
         private byte[] depthBytes = null;
         private byte[] bodyIndexBytes = null;
         private uint[] bodyIndexPixels = null;
+
+        int counter = 0;
+        int maxCount = 15 * 30;
 
         /// <summary>
         /// Initializes a new instance of the MainWindow class.
@@ -90,7 +101,7 @@ namespace Microsoft.Samples.Kinect.CoordinateMappingBasics
             this.bodyIndexPixels = new uint[depthWidth * depthHeight];
             this.depthBytes = new byte[depthWidth * depthHeight * this.depthFrameDescription.BytesPerPixel];
             this.bodyIndexBytes = new byte[depthWidth * depthHeight];
-
+            
             FrameDescription colorFrameDescription = this.kinectSensor.ColorFrameSource.FrameDescription;
 
             int colorWidth = colorFrameDescription.Width;
@@ -99,7 +110,7 @@ namespace Microsoft.Samples.Kinect.CoordinateMappingBasics
             //this.colorMappedToDepthPoints = new DepthSpacePoint[colorWidth * colorHeight];
 
             this.bitmap = new WriteableBitmap(colorWidth, colorHeight, 96.0, 96.0, PixelFormats.Bgra32, null);
-            
+
             // Calculate the WriteableBitmap back buffer size
             //this.bitmapBackBufferSize = (uint)((this.bitmap.BackBufferStride * (this.bitmap.PixelHeight - 1)) + (this.bitmap.PixelWidth * this.bytesPerPixel));
                                    
@@ -173,6 +184,12 @@ namespace Microsoft.Samples.Kinect.CoordinateMappingBasics
             {
                 this.kinectSensor.Close();
                 this.kinectSensor = null;
+            }
+
+            if (this.videoWriter != null)
+            {
+                this.videoWriter.Dispose();
+                this.videoWriter = null;
             }
         }
 
@@ -296,11 +313,40 @@ namespace Microsoft.Samples.Kinect.CoordinateMappingBasics
 
 
                 // Process Color
-                // Lock the bitmap for writing
                 this.bitmap.Lock();
+                // Lock the bitmap for writing
                 isBitmapLocked = true;
                 uint size = (uint)((this.bitmap.BackBufferStride * (this.bitmap.PixelHeight - 1)) + (this.bitmap.PixelWidth * this.bytesPerPixel));
                 colorFrame.CopyConvertedFrameDataToIntPtr(this.bitmap.BackBuffer, size, ColorImageFormat.Bgra);
+                int videoWidth = colorFrame.FrameDescription.Width;
+                int videoHeight = colorFrame.FrameDescription.Height;
+
+                if (videoWriter != null)
+                {
+                    Bitmap image = new Bitmap(videoWidth, videoHeight);
+                    BitmapData imageData = image.LockBits(new Rectangle(0, 0, videoWidth, videoHeight),
+                        ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format32bppRgb);
+                    colorFrame.CopyConvertedFrameDataToIntPtr(imageData.Scan0, size, ColorImageFormat.Rgba);
+                    image.UnlockBits(imageData);
+
+                    Image<Rgb, byte> im = new Image<Rgb, byte>(image);
+                    videoWriter.WriteFrame(im);
+                    counter++;
+                    if (counter >= maxCount)
+                    {
+                        videoWriter.Dispose();
+                        videoWriter = null;
+                        counter = 0;
+                    }
+                    image.Dispose();
+                }
+                else 
+                {
+                    string time = System.DateTime.Now.ToString("hh'-'mm'-'ss", CultureInfo.CurrentUICulture.DateTimeFormat);
+                    string myPhotos = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
+                    string path = Path.Combine(myPhotos, "test-" + time + ".avi");
+                    videoWriter = new VideoWriter(path, 30, videoWidth, videoHeight, true);
+                }
                 // We're done with the ColorFrame 
                 colorFrame.Dispose();
                 colorFrame = null;

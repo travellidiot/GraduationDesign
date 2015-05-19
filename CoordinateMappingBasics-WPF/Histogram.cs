@@ -63,14 +63,14 @@ namespace FeatureExtracter
         }
     }
 
-    public interface IHistogram<T>
+    public interface IHistogram<TBin>
     {
         /// <summary>
         /// 指定bin的值
         /// </summary>
         /// <param name="bin">要指定的bin</param>
         /// <returns></returns>
-        float this[T bin] { get; set; }
+        float this[TBin bin] { get; set; }
         /// <summary>
         /// 都直方图归一化
         /// </summary>
@@ -84,12 +84,12 @@ namespace FeatureExtracter
         /// </summary>
         /// <param name="histo">另一个直方图</param>
         /// <returns></returns>
-        double DistanceTo(IHistogram<T> histo);
+        double DistanceTo(IHistogram<TBin> histo);
         /// <summary>
         /// 合并两个直方图，两个直方图必须都未归一化
         /// </summary>
         /// <param name="histo">另一个直方图</param>
-        IHistogram<T> Merge(IHistogram<T> histo);
+        IHistogram<TBin> Merge(IHistogram<TBin> histo);
     }
 
     public class HueHisto : IHistogram<byte>
