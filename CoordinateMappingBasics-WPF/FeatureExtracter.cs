@@ -126,7 +126,7 @@ namespace FeatureExtracter
             }
         }
 
-        private DepthSpacePoint[] getJointsPosInColorSpace(int bodyIndex)
+        private DepthSpacePoint[] getJointsPosInDepthSpace(int bodyIndex)
         {
             DepthSpacePoint[] jointsInDepthSpacePoints =new DepthSpacePoint[bodies[bodyIndex].Joints.Count];    
             coordinateMapper.MapCameraPointsToDepthSpace(jointsInCameraSpace[bodyIndex], jointsInDepthSpacePoints);
@@ -139,7 +139,7 @@ namespace FeatureExtracter
         /// </summary>
         /// <param name="joints">需要做包围盒的节点数组</param>
         /// <returns></returns>
-        private BoxRect getBox(DepthSpacePoint[] joints)
+        public BoxRect GetBox(DepthSpacePoint[] joints)
         {
             IEnumerable<float> coorX = Enumerable.Select<DepthSpacePoint, float>(joints, (j) => j.X);
             IEnumerable<float> coorY = Enumerable.Select<DepthSpacePoint, float>(joints, (j) => j.Y);
@@ -166,7 +166,7 @@ namespace FeatureExtracter
                 joints[(int)JointType.SpineBase]
             };
 
-            return getBox(upBodyJoints);
+            return GetBox(upBodyJoints);
         }
 
         private BoxRect getDownBodyBox(DepthSpacePoint[] joints)
@@ -181,7 +181,7 @@ namespace FeatureExtracter
                 joints[(int)JointType.AnkleRight]
             };
 
-            return getBox(downBodyJoints);
+            return GetBox(downBodyJoints);
         }
 
         private BoxRect getLeftFootBox(DepthSpacePoint[] joints)
@@ -197,7 +197,7 @@ namespace FeatureExtracter
                 ankleLeft, footLeft, footTipLeft
             };
 
-            return getBox(leftFootJoints);
+            return GetBox(leftFootJoints);
         }
 
         private BoxRect getRightFootBox(DepthSpacePoint[] joints)
@@ -213,12 +213,12 @@ namespace FeatureExtracter
                 ankleRight, footRight, footTipRight
             };
 
-            return getBox(leftFootJoints);
+            return GetBox(leftFootJoints);
         }
 
         public HistoTuple ExtractHistograms(int bodyIndex)
         {
-            DepthSpacePoint[] jointsInDepthSpacePoints = getJointsPosInColorSpace(bodyIndex);
+            DepthSpacePoint[] jointsInDepthSpacePoints = getJointsPosInDepthSpace(bodyIndex);
             BoxRect upBodyRect = getUpBodyBox(jointsInDepthSpacePoints);
             //BoxRect downBodyRect = getDownBodyBox(jointsInDepthSpacePoints);
             //BoxRect leftFootRect = getLeftFootBox(jointsInDepthSpacePoints);
