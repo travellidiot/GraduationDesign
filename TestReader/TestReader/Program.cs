@@ -16,7 +16,7 @@ namespace TestReader
     {
         static void Main(string[] args)
         {
-            string myPhotos = @"V:\GitHub\kinect-picking\GraduationDesign\Data";
+            string myPhotos = @"C:\Users\koala-papa\Documents\GitHub\GraduationDesign\Data";
             string bodyPath = Path.Combine(myPhotos, "BodyIndex-09-33-41.bi");
             string skeletonPath = Path.Combine(myPhotos, "SkeletonData-09-33-41.skt");
             string colorPath = Path.Combine(myPhotos, "ColorImage.png");

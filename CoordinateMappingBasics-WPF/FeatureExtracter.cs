@@ -40,11 +40,20 @@ namespace FeatureExtracter
             this.coordinateMapper = this.kinectSensor.CoordinateMapper;
         }
 
+        public void LoadColorBitmap(Bitmap color)
+        {
+            this.colorBitmap = color;
+        }
         public void LoadColorFile(string colorFileName)
         {
-            colorBitmap = new Bitmap(colorFileName);
+            this.colorBitmap = new Bitmap(colorFileName);
         }
 
+
+        public void LoadDepthBytes(byte[] depth)
+        {
+            this.depthBytes = depth;
+        }
         public void LoadDepthFile(string depthFileName, int width, int height)
         {
             int bytesPerPixel = Marshal.SizeOf(typeof(ushort)) / Marshal.SizeOf(typeof(byte));
@@ -58,6 +67,10 @@ namespace FeatureExtracter
             }
         }
 
+        public void LoadDepthIndexBytes(byte[] depthIndex)
+        {
+            this.bodyIndexBytes = depthIndex;
+        }
         public void LoadDepthIndexFile(string depthIndexFileName, int width, int height)
         {
             using (BinaryReader br = new BinaryReader(File.Open(depthIndexFileName, FileMode.Open)))
@@ -66,6 +79,10 @@ namespace FeatureExtracter
             }
         }
 
+        public void LoadBodies(Body[] bodies)
+        {
+
+        }
         public void LoadSkeletonFile(string skeletonFileName)
         {
             using (BodyReader br = new BodyReader(File.Open(skeletonFileName, FileMode.Open)))
@@ -73,13 +90,8 @@ namespace FeatureExtracter
                 this.bodies = br.ReadAllBodies();
             }
         }
-        /// <summary>
-        /// 载入提取特征需要的文件（彩色图像，深度数据，BodyIndex数据，骨骼数据）
-        /// </summary>
-        /// <param name="colorFileName">彩色图像</param>
-        /// <param name="depthFileName">深度图像</param>
-        /// <param name="depthIndexFileName">Body Index 图像</param>
-        /// <param name="skeletonFileName">骨骼数据</param>
+        
+
         public void Init()
         {
             jointsInCameraSpace = new CameraSpacePoint[bodies.Length][];
