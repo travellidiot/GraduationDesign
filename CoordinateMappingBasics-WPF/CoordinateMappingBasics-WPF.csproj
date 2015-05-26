@@ -100,6 +100,7 @@
     <Reference Include="Microsoft.Kinect">
       <HintPath>$(KINECTSDK20_DIR)Assemblies\Microsoft.Kinect.dll</HintPath>
     </Reference>
+<<<<<<< HEAD
     <Reference Include="MongoDB.Bson, Version=2.0.0.828, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\MongoDB.Bson.2.0.0\lib\net45\MongoDB.Bson.dll</HintPath>
       <Private>True</Private>
@@ -111,6 +112,16 @@
     <Reference Include="MongoDB.Driver.Core, Version=2.0.0.828, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\MongoDB.Driver.Core.2.0.0\lib\net45\MongoDB.Driver.Core.dll</HintPath>
       <Private>True</Private>
+=======
+    <Reference Include="MongoDB.Bson">
+      <HintPath>packages\MongoDB.Bson.2.0.0\lib\net45\MongoDB.Bson.dll</HintPath>
+    </Reference>
+    <Reference Include="MongoDB.Driver">
+      <HintPath>packages\MongoDB.Driver.2.0.0\lib\net45\MongoDB.Driver.dll</HintPath>
+    </Reference>
+    <Reference Include="MongoDB.Driver.Core">
+      <HintPath>packages\MongoDB.Driver.Core.2.0.0\lib\net45\MongoDB.Driver.Core.dll</HintPath>
+>>>>>>> origin/Development
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
