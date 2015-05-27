@@ -128,17 +128,6 @@ namespace Microsoft.Samples.Kinect.CoordinateMappingBasics
         int counter = 0;
         int maxCount = 15 * 30;
 
-        //private float judge(Body outbody, int index)
-        //{
-
-        //    Dictionary<JointType, Joint> d = body.Joints;
-        //    CameraSpacePoint[] ps = new CameraSpacePoint[body.Joints.Count];
-        //    for (int i = 0 ; i < count ; i++)
-        //    {
-        //        ps[i] = d.Values[i];
-        //    }
-        //}
-
         private float qualityCalc(Body outbody, int index)
         {
             float score = 0;
@@ -397,6 +386,8 @@ namespace Microsoft.Samples.Kinect.CoordinateMappingBasics
                 colorFrame = multiSourceFrame.ColorFrameReference.AcquireFrame();
                 bodyIndexFrame = multiSourceFrame.BodyIndexFrameReference.AcquireFrame();
                 bodyFrame = multiSourceFrame.BodyFrameReference.AcquireFrame();
+                Task[] tasks = new Task[4];
+                int videoIndex = this.counter;
 
                 // If any frame has expired by the time we process this event, return.
                 // The "finally" statement will Dispose any that are not null.
@@ -405,138 +396,102 @@ namespace Microsoft.Samples.Kinect.CoordinateMappingBasics
                     return;
                 }
 
-                // Process Depth
-                // Access the depth frame data directly via LockImageBuffer to avoid making a copy
-                using (KinectBuffer depthFrameData = depthFrame.LockImageBuffer())
+                #region Process Depth
+                tasks[0] = Task.Factory.StartNew(() =>
                 {
-                    //this.coordinateMapper.MapColorFrameToDepthSpaceUsingIntPtr(
-                    //    depthFrameData.UnderlyingBuffer,
-                    //    depthFrameData.Size,
-                    //    this.colorMappedToDepthPoints);
-                    Marshal.Copy(depthFrameData.UnderlyingBuffer, this.depthBytes, 0, (int)depthFrameData.Size);
-                    
-                }
-                // We're done with the DepthFrame 
-                depthFrame.Dispose();
-                depthFrame = null;
-
-
-                // Process Color
-                this.bitmap.Lock();
-                //this.colorBitmap.Lock();
-                //// verify data and write the new color frame data to the display bitmap
-                //if ((colorFrame.FrameDescription.Width == this.colorBitmap.PixelWidth) && (colorFrame.FrameDescription.Height == this.colorBitmap.PixelHeight))
-                //{
-                //    colorFrame.CopyConvertedFrameDataToIntPtr(
-                //        this.colorBitmap.BackBuffer,
-                //        (uint)(colorFrame.FrameDescription.Width * colorFrame.FrameDescription.Height * 4),
-                //        ColorImageFormat.Bgra);
-
-                //    this.colorBitmap.AddDirtyRect(new Int32Rect(0, 0, this.colorBitmap.PixelWidth, this.colorBitmap.PixelHeight));
-                //}
-
-                //this.colorBitmap.Unlock();
-                
-                // Lock the bitmap for writing
-                isBitmapLocked = true;
-                uint size = (uint)((this.bitmap.BackBufferStride * (this.bitmap.PixelHeight - 1)) + (this.bitmap.PixelWidth * this.bytesPerPixel));
-                colorFrame.CopyConvertedFrameDataToIntPtr(this.bitmap.BackBuffer, size, ColorImageFormat.Bgra);
-                this.bitmap.AddDirtyRect(new Int32Rect(0, 0, this.bitmap.PixelWidth, this.bitmap.PixelHeight));
-                int videoWidth = colorFrame.FrameDescription.Width;
-                int videoHeight = colorFrame.FrameDescription.Height;
-
-                if (videoWriter != null)
-                {
-                    Bitmap image = new Bitmap(videoWidth, videoHeight);
-                    BitmapData imageData = image.LockBits(new Rectangle(0, 0, videoWidth, videoHeight),
-                        ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format32bppRgb);
-                    colorFrame.CopyConvertedFrameDataToIntPtr(imageData.Scan0, size, ColorImageFormat.Rgba);
-                    image.UnlockBits(imageData);
-
-                    Image<Rgb, byte> im = new Image<Rgb, byte>(image);
-                    videoWriter.WriteFrame(im);
-                    counter++;
-                    if (counter >= maxCount)
+                    // Access the depth frame data directly via LockImageBuffer to avoid making a copy
+                    using (KinectBuffer depthFrameData = depthFrame.LockImageBuffer())
                     {
-                        videoWriter.Dispose();
-                        videoWriter = null;
-                        counter = 0;
+                        //this.coordinateMapper.MapColorFrameToDepthSpaceUsingIntPtr(
+                        //    depthFrameData.UnderlyingBuffer,
+                        //    depthFrameData.Size,
+                        //    this.colorMappedToDepthPoints);
+                        Marshal.Copy(depthFrameData.UnderlyingBuffer, this.depthBytes, 0, (int)depthFrameData.Size);
+
                     }
-                    image.Dispose();
-                }
-                else 
-                {
-                    string time = System.DateTime.UtcNow.ToString("hh'-'mm'-'ss", CultureInfo.CurrentUICulture.DateTimeFormat);
-                    string myPhotos = @"V:\GitHub\kinect-picking\GraduationDesign\Data";
-                    string videoPath = Path.Combine(myPhotos, "ColorVideo-" + time + ".avi");
-                    //string myColorVideo = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-                    //string myPhotos = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
-                    //string path = Path.Combine(myPhotos, "test-" + time + ".avi");
-                    videoWriter = new VideoWriter(videoPath, 30, videoWidth, videoHeight, true);
-                }
-                // We're done with the ColorFrame 
-                colorFrame.Dispose();
-                colorFrame = null;
+                });
+                #endregion
 
-                // We'll access the body index data directly to avoid a copy
-                using (KinectBuffer bodyIndexData = bodyIndexFrame.LockImageBuffer())
+                #region Process Color
+                tasks[1] = Task.Factory.StartNew(() =>
                 {
-                    Marshal.Copy(bodyIndexData.UnderlyingBuffer, this.bodyIndexBytes, 0, (int)bodyIndexData.Size);
-                    //Parallel.For (0, size, i =>
-                    //{
-                    //    if (this.bodyIndexBytes[i] == 3)
-                    //        this.bodyIndexBytes[i] = 1;
-                    //});
-                }
+                    this.bitmap.Lock();
 
+                    // Lock the bitmap for writing
+                    isBitmapLocked = true;
+                    uint size = (uint)((this.bitmap.BackBufferStride * (this.bitmap.PixelHeight - 1)) + (this.bitmap.PixelWidth * this.bytesPerPixel));
+                    colorFrame.CopyConvertedFrameDataToIntPtr(this.bitmap.BackBuffer, size, ColorImageFormat.Bgra);
+                    this.bitmap.AddDirtyRect(new Int32Rect(0, 0, this.bitmap.PixelWidth, this.bitmap.PixelHeight));
 
-                // Process Body
-                if (this.bodies == null)
-                {
-                    this.bodies = new Body[bodyFrame.BodyCount];
-                }
-                bodyFrame.GetAndRefreshBodyData(this.bodies);
-                for(int i = 0 ; i < bodies.Length;i++)
-                {
-                    float qualityScore = qualityCalc(bodies[i],i);
-                    //Dictionary<ulong, Tuple<int, float, HueHisto>> qualities = null;
-                    //Dictionary<ulong, Tuple<int, float, HueHisto>> qualities = null;
-                    if(qualityScore != 0)
+                    int videoWidth = colorFrame.FrameDescription.Width;
+                    int videoHeight = colorFrame.FrameDescription.Height;
+
+                    if (videoWriter != null)
                     {
-                        //如果包含该TrackingId,即人物出现过并仍在持续出现中
-                        if(qualities.ContainsKey(bodies[i].TrackingId))
-                        {
-                            List<Tuple<int, float, HueHisto, WriteableBitmap>> list = qualities[bodies[i].TrackingId];
-                            if (list.Count < 6)
-                            {
-                                FeatureExtracter extracter = new FeatureExtracter(this.kinectSensor);
-                                Dictionary<JointType, Joint> joints = bodies[i].Joints as Dictionary<JointType, Joint>;
-                                CameraSpacePoint[] bodyJoints = new CameraSpacePoint[joints.Count];
-                                foreach (Joint j in joints.Values)
-                                {
-                                    bodyJoints[(int)j.JointType] = j.Position;
-                                }
-                                DepthSpacePoint[] bodyDepthPoints = new DepthSpacePoint[joints.Count];
-                                coordinateMapper.MapCameraPointsToDepthSpace(bodyJoints, bodyDepthPoints);
-                                BoxRect rect = extracter.GetBox(bodyDepthPoints);
-                                HueHisto hue = extracter.BodyPartHueHisto(i, rect);
+                        Bitmap image = new Bitmap(videoWidth, videoHeight);
+                        BitmapData imageData = image.LockBits(
+                            new Rectangle(0, 0, videoWidth, videoHeight),
+                            ImageLockMode.WriteOnly,
+                            System.Drawing.Imaging.PixelFormat.Format32bppRgb);
 
-                                Tuple<int, float, HueHisto, WriteableBitmap> newTuple = Tuple.Create<int, float, HueHisto, WriteableBitmap>(counter, qualityScore, hue, bitmap);
-                                list.Add(newTuple);
-                            }
-                            else
+                        colorFrame.CopyConvertedFrameDataToIntPtr(imageData.Scan0, size, ColorImageFormat.Rgba);
+                        image.UnlockBits(imageData);
+
+                        Image<Rgb, byte> im = new Image<Rgb, byte>(image);
+                        videoWriter.WriteFrame(im);
+                        counter++;
+
+                        if (counter >= maxCount)
+                        {
+                            videoWriter.Dispose();
+                            videoWriter = null;
+                            counter = 0;
+                        }
+                        image.Dispose();
+                    }
+                    else
+                    {
+                        string time = System.DateTime.UtcNow.ToString("hh'-'mm'-'ss", CultureInfo.CurrentUICulture.DateTimeFormat);
+                        string myPhotos = @"V:\GitHub\kinect-picking\GraduationDesign\Data";
+                        string videoPath = Path.Combine(myPhotos, "ColorVideo-" + time + ".avi");
+
+                        videoWriter = new VideoWriter(videoPath, 30, videoWidth, videoHeight, true);
+                    }
+                });
+                #endregion
+
+                #region Process BodyIndex
+                tasks[2] = Task.Factory.StartNew(() =>
+                {
+                    // We'll access the body index data directly to avoid a copy
+                    using (KinectBuffer bodyIndexData = bodyIndexFrame.LockImageBuffer())
+                    {
+                        Marshal.Copy(bodyIndexData.UnderlyingBuffer, this.bodyIndexBytes, 0, (int)bodyIndexData.Size);
+                    }
+                });
+                #endregion
+
+                #region Process Body
+                tasks[3] = Task.Factory.StartNew(() =>
+                {
+                    if (this.bodies == null)
+                    {
+                        this.bodies = new Body[bodyFrame.BodyCount];
+                    }
+                    bodyFrame.GetAndRefreshBodyData(this.bodies);
+
+                    for (int i = 0; i < bodies.Length; i++)
+                    {
+                        float qualityScore = qualityCalc(bodies[i], i);
+                        //Dictionary<ulong, Tuple<int, float, HueHisto>> qualities = null;
+                        //Dictionary<ulong, Tuple<int, float, HueHisto>> qualities = null;
+                        if (qualityScore != 0)
+                        {
+                            //如果包含该TrackingId,即人物出现过并仍在持续出现中
+                            if (qualities.ContainsKey(bodies[i].TrackingId))
                             {
-                                float min = list[0].Item2;
-                                int pos = 0;
-                                for (int j = 0 ; j < list.Count ; j++)
-                                {
-                                    if(list[j].Item2 < min)
-                                    {
-                                        min = list[j].Item2;
-                                        pos = j;
-                                    }
-                                }
-                                if( min < qualityScore )
+                                List<Tuple<int, float, HueHisto, WriteableBitmap>> list = qualities[bodies[i].TrackingId];
+                                if (list.Count < 6)
                                 {
                                     FeatureExtracter extracter = new FeatureExtracter(this.kinectSensor);
                                     Dictionary<JointType, Joint> joints = bodies[i].Joints as Dictionary<JointType, Joint>;
@@ -550,58 +505,90 @@ namespace Microsoft.Samples.Kinect.CoordinateMappingBasics
                                     BoxRect rect = extracter.GetBox(bodyDepthPoints);
                                     HueHisto hue = extracter.BodyPartHueHisto(i, rect);
 
-                                    Tuple<int, float, HueHisto, WriteableBitmap> newTuple = Tuple.Create<int, float, HueHisto, WriteableBitmap>(counter, qualityScore, hue, bitmap);
-                                    list[pos] = newTuple; 
+                                    Tuple<int, float, HueHisto, WriteableBitmap> newTuple = Tuple.Create<int, float, HueHisto, WriteableBitmap>(videoIndex, qualityScore, hue, bitmap);
+                                    list.Add(newTuple);
                                 }
-                            }
-                        }
-                        else 
-                        {
-                            List<Tuple<int, float, HueHisto, WriteableBitmap>> list = qualities[bodies[i].TrackingId];
-                            //阈值还没测试只是随便写的需要试验调整
-                            float threshold_val = 10;
-                            FeatureExtracter extracter = new FeatureExtracter(this.kinectSensor);
-                            Dictionary<JointType, Joint> joints = bodies[i].Joints as Dictionary<JointType, Joint>;
-                            CameraSpacePoint[] bodyJoints = new CameraSpacePoint[joints.Count];
-                            foreach (Joint j in joints.Values)
-                            {
-                                bodyJoints[(int)j.JointType] = j.Position;
-                            }
-                            DepthSpacePoint[] bodyDepthPoints = new DepthSpacePoint[joints.Count];
-                            coordinateMapper.MapCameraPointsToDepthSpace(bodyJoints, bodyDepthPoints);
-                            BoxRect rect = extracter.GetBox(bodyDepthPoints);
-                            HueHisto hue = extracter.BodyPartHueHisto(i, rect);
+                                else
+                                {
+                                    float min = list[0].Item2;
+                                    int pos = 0;
+                                    for (int j = 0; j < list.Count; j++)
+                                    {
+                                        if (list[j].Item2 < min)
+                                        {
+                                            min = list[j].Item2;
+                                            pos = j;
+                                        }
+                                    }
+                                    if (min < qualityScore)
+                                    {
+                                        FeatureExtracter extracter = new FeatureExtracter(this.kinectSensor);
+                                        Dictionary<JointType, Joint> joints = bodies[i].Joints as Dictionary<JointType, Joint>;
+                                        CameraSpacePoint[] bodyJoints = new CameraSpacePoint[joints.Count];
+                                        foreach (Joint j in joints.Values)
+                                        {
+                                            bodyJoints[(int)j.JointType] = j.Position;
+                                        }
+                                        DepthSpacePoint[] bodyDepthPoints = new DepthSpacePoint[joints.Count];
+                                        coordinateMapper.MapCameraPointsToDepthSpace(bodyJoints, bodyDepthPoints);
+                                        BoxRect rect = extracter.GetBox(bodyDepthPoints);
+                                        HueHisto hue = extracter.BodyPartHueHisto(i, rect);
 
-                            Tuple<int, float, HueHisto, WriteableBitmap> newTuple = Tuple.Create<int, float, HueHisto, WriteableBitmap>(counter, qualityScore, hue, bitmap);
-                            int pos_flag = -1;
-                            for(int j = 0 ; j < list.Count ; j++)
-                            {
-                                if(hue.DistanceTo(list[j].Item3)<threshold_val)
-                                {
-                                    pos_flag = j;
-                                    break;
-                                }
-                            }
-                            if(pos_flag>=0)
-                            {
-                                if(list[pos_flag].Item2 < qualityScore)
-                                {
-                                    list[pos_flag] = newTuple;
+                                        Tuple<int, float, HueHisto, WriteableBitmap> newTuple = Tuple.Create<int, float, HueHisto, WriteableBitmap>(videoIndex, qualityScore, hue, bitmap);
+                                        list[pos] = newTuple;
+                                    }
                                 }
                             }
                             else
                             {
-                                list.Add(newTuple);
+                                List<Tuple<int, float, HueHisto, WriteableBitmap>> list = qualities[bodies[i].TrackingId];
+                                //阈值还没测试只是随便写的需要试验调整
+                                float threshold_val = 10;
+                                FeatureExtracter extracter = new FeatureExtracter(this.kinectSensor);
+                                Dictionary<JointType, Joint> joints = bodies[i].Joints as Dictionary<JointType, Joint>;
+                                CameraSpacePoint[] bodyJoints = new CameraSpacePoint[joints.Count];
+                                foreach (Joint j in joints.Values)
+                                {
+                                    bodyJoints[(int)j.JointType] = j.Position;
+                                }
+                                DepthSpacePoint[] bodyDepthPoints = new DepthSpacePoint[joints.Count];
+                                coordinateMapper.MapCameraPointsToDepthSpace(bodyJoints, bodyDepthPoints);
+                                BoxRect rect = extracter.GetBox(bodyDepthPoints);
+                                HueHisto hue = extracter.BodyPartHueHisto(i, rect);
+
+                                Tuple<int, float, HueHisto, WriteableBitmap> newTuple = Tuple.Create<int, float, HueHisto, WriteableBitmap>(videoIndex, qualityScore, hue, bitmap);
+                                int pos_flag = -1;
+                                for (int j = 0; j < list.Count; j++)
+                                {
+                                    if (hue.DistanceTo(list[j].Item3) < threshold_val)
+                                    {
+                                        pos_flag = j;
+                                        break;
+                                    }
+                                }
+                                if (pos_flag >= 0)
+                                {
+                                    if (list[pos_flag].Item2 < qualityScore)
+                                    {
+                                        list[pos_flag] = newTuple;
+                                    }
+                                }
+                                else
+                                {
+                                    list.Add(newTuple);
+                                }
                             }
+                            System.Diagnostics.Debug.WriteLine(bodies[i].TrackingId);
+                            System.Diagnostics.Debug.Write(qualityScore);
+                            System.Diagnostics.Debug.Write(" ");
+                            System.Diagnostics.Debug.WriteLine(i);
                         }
-                        System.Diagnostics.Debug.WriteLine(bodies[i].TrackingId);
-                        System.Diagnostics.Debug.Write(qualityScore);
-                        System.Diagnostics.Debug.Write(" ");
-                        System.Diagnostics.Debug.WriteLine(i);
+                        //HueHisto hHist = new HueHisto();
+
                     }
-                    //HueHisto hHist = new HueHisto();
-                    
-                }
+                });
+                #endregion
+
                 //foreach(Body body in bodies)
                 //{
                 //    if(body.IsTracked)
@@ -613,6 +600,16 @@ namespace Microsoft.Samples.Kinect.CoordinateMappingBasics
                 //        System.Diagnostics.Debug.WriteLine("No body is tracked!");
                 //    }
                 //}
+                // We're done with the DepthFrame 
+
+                Task.WaitAll(tasks);
+
+                depthFrame.Dispose();
+                depthFrame = null;
+
+                colorFrame.Dispose();
+                colorFrame = null;
+
                 bodyFrame.Dispose();  
                 bodyFrame = null;
             }

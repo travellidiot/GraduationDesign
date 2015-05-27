@@ -127,6 +127,12 @@ namespace FeatureExtracter
         {
             this.TrackingId = id;
         }
+
+        public BodyData(Body body)
+        {
+            this.TrackingId = body.TrackingId;
+            this.joints = body.Joints as Dictionary<JointType, Joint>;
+        }
     }
 
     public class BodyReader : IDisposable

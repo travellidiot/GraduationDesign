@@ -14,8 +14,37 @@ using Microsoft.Kinect;
 namespace FeatureExtracter
 {
 
-    using BoxRect = Tuple<float, float, float, float>;
-    using HistoTuple = Tuple<IHistogram<byte>, IHistogram<byte>, IHistogram<byte>>;
+    //using BoxRect = Tuple<float, float, float, float>;
+    //using HistoTuple = Tuple<IHistogram<byte>, IHistogram<byte>, IHistogram<byte>>;
+
+    public class BoxRect
+    {
+        private Tuple<float, float, float, float> box;
+        
+        public BoxRect(float left, float lower, float right, float upper)
+        {
+            this.box = new Tuple<float, float, float, float>(left, lower, right, upper);
+        }
+
+        public float Left { get { return this.box.Item1; } }
+        public float Lower { get { return this.box.Item2; } }
+        public float Right { get { return this.box.Item3; } }
+        public float Upper { get { return this.box.Item4; } }
+    }
+
+    public class HistoTuple<THisto>
+    {
+        private Tuple<THisto, THisto, THisto> histoTuple;
+
+        public HistoTuple(THisto upperPart, THisto lowerPart, THisto feetPart)
+        {
+            this.histoTuple = new Tuple<THisto, THisto, THisto>(upperPart, lowerPart, feetPart);
+        }
+
+        public THisto UpperBody { get { return this.histoTuple.Item1; } }
+        public THisto LowerBody { get { return this.histoTuple.Item2; } }
+        public THisto Feet { get { return this.histoTuple.Item3; } }
+    }
 
     public class FeatureExtracter
     {
@@ -79,9 +108,12 @@ namespace FeatureExtracter
             }
         }
 
-        public void LoadBodies(Body[] bodies)
+        public void LoadBodies(Body[] kinectBodies)
         {
-
+            if (this.bodies == null)
+            {
+                this.bodies = kinectBodies.Select(body => new BodyData(body)).ToArray();
+            }
         }
         public void LoadSkeletonFile(string skeletonFileName)
         {
@@ -91,6 +123,13 @@ namespace FeatureExtracter
             }
         }
         
+        public void LoadAllData(Bitmap kColorBimap, byte[] kDepthBytes, byte[] kDepthIndexBytes, Body[] kBodies)
+        {
+            LoadColorBitmap(kColorBimap);
+            LoadDepthBytes(kDepthBytes);
+            LoadDepthIndexBytes(kDepthIndexBytes);
+            LoadBodies(kBodies);
+        }
 
         public void Init()
         {
@@ -123,11 +162,11 @@ namespace FeatureExtracter
                 }
 
                 //Debug.WriteLine("{0}, {1}", i, bodies[i].TrackingId);
-                HistoTuple tuple = ExtractHistograms(i);
-                IHistogram<byte> hhisto = tuple.Item1;
+                HistoTuple<IHistogram<byte>> tuple = ExtractHistograms(i);
+                IHistogram<byte> hhisto = tuple.UpperBody;
                 using (BinaryWriter fs = new BinaryWriter(File.Open(@"V:\GitHub\kinect-picking\GraduationDesign\Test\hist.txt", FileMode.Append)))
                 {
-                    string line = "Boddy " + i.ToString() + ":\r\n";
+                    string line = "Body " + i.ToString() + ":\r\n";
                     fs.Write(line);
                     for (byte bin = 0; bin < HueHisto.Dimension; bin++)
                     {
@@ -156,7 +195,7 @@ namespace FeatureExtracter
             IEnumerable<float> coorX = Enumerable.Select<DepthSpacePoint, float>(joints, (j) => j.X);
             IEnumerable<float> coorY = Enumerable.Select<DepthSpacePoint, float>(joints, (j) => j.Y);
 
-            var rect = Tuple.Create<float, float, float, float>(coorX.Min(), coorY.Max(), coorX.Max(), coorY.Min());
+            var rect = new BoxRect(coorX.Min(), coorY.Max(), coorX.Max(), coorY.Min());
 
             return rect;
         }
@@ -228,7 +267,7 @@ namespace FeatureExtracter
             return GetBox(leftFootJoints);
         }
 
-        public HistoTuple ExtractHistograms(int bodyIndex)
+        public HistoTuple<IHistogram<byte>> ExtractHistograms(int bodyIndex)
         {
             DepthSpacePoint[] jointsInDepthSpacePoints = getJointsPosInDepthSpace(bodyIndex);
             BoxRect upBodyRect = getUpBodyBox(jointsInDepthSpacePoints);
@@ -252,10 +291,10 @@ namespace FeatureExtracter
             //downBodyHisto.Norm();
             //footHisto.Norm();
 
-            return Tuple.Create<IHistogram<byte>, IHistogram<byte>, IHistogram<byte>>(upBodyHisto, downBodyHisto, footHisto);
+            return new HistoTuple<IHistogram<byte>>(upBodyHisto, downBodyHisto, footHisto);
         }
 
-        private HueHisto BodyPartHueHisto(int bodyIndex, BoxRect rect)
+        public HueHisto BodyPartHueHisto(int bodyIndex, BoxRect rect)
         {
             BitmapData bitmapData = this.colorBitmap.LockBits(new Rectangle(0, 0, colorBitmap.Width, colorBitmap.Height),
                 ImageLockMode.ReadOnly, colorBitmap.PixelFormat);
@@ -268,12 +307,15 @@ namespace FeatureExtracter
             {
                 byte* p = (byte*)bitmapData.Scan0;
 
-                for (float i = rect.Item4; i < rect.Item2; i++)
+                int upper = (int)(rect.Upper + 0.5);
+                int lower = (int)(rect.Lower + 0.5);
+                int left = (int)(rect.Left + 0.5);
+                int right = (int)(rect.Right + 0.5);
+
+                Parallel.For(upper, lower, depthY =>
                 {
-                    for (float j = rect.Item1; j < rect.Item3; j++)
+                    for (int depthX = left; depthX < right; depthX++)
                     {
-                        int depthX = (int)(j + 0.5);
-                        int depthY = (int)(i + 0.5);
                         if ((depthX >= 0) && (depthX <= depthWidth) && (depthY >= 0) && (depthY <= depthHeight))
                         {
                             int depthIndex = depthY * depthWidth + depthX;
@@ -282,19 +324,19 @@ namespace FeatureExtracter
                                 int colorX = (int)(depthMappedToColorPoints[depthIndex].X + 0.5);
                                 int colorY = (int)(depthMappedToColorPoints[depthIndex].Y + 0.5);
                                 if (colorY >= bitmapData.Height)
-                                    colorY = bitmapData.Height-1;
+                                    colorY = bitmapData.Height - 1;
                                 if (colorX >= bitmapData.Width)
-                                    colorX = bitmapData.Width-1;
+                                    colorX = bitmapData.Width - 1;
                                 int index = colorY * bitmapData.Stride + colorX * 3;
                                 int r = index, g = index + 1, b = index + 2;
-                                Debug.WriteLine("{0}, {1}, {2}", colorX, colorY, index);
+                                // Debug.WriteLine("{0}, {1}, {2}", colorX, colorY, index);
                                 float hue = ColorConvertor.Instance.GetHue(*(p + r), *(p + g), *(p + b));
                                 byte bin = (byte)(hue / (360 / HueHisto.Dimension));
                                 hhisto[bin]++;
                             }
                         }
                     }
-                }
+                });
             }
 
             this.colorBitmap.UnlockBits(bitmapData);
