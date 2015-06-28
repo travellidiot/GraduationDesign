@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 using System.IO;
 using Microsoft.Kinect;
 
-namespace TestReader
+namespace FeatureExtracter
 {
     /// <summary>
     /// 用来管理非托管内存
@@ -53,7 +53,7 @@ namespace TestReader
     /// <summary>
     /// 结构体和字节流之间的互相转换，主要用于离线骨骼数据
     /// </summary>
-    unsafe class SBConvertor
+    class SBConvertor
     {
         private static readonly SBConvertor instance = new SBConvertor();
         private SBConvertor() { }
@@ -70,7 +70,7 @@ namespace TestReader
         /// 结构体转为字节流
         /// </summary>
         /// <param name="structure">需要转换的结构体对象</param>
-        /// <returns></returns>
+        /// <returns>字节流</returns>
         public byte[] StructToBytes(Object structure)
         {
             int size = Marshal.SizeOf(structure);
@@ -78,12 +78,16 @@ namespace TestReader
 
             using (UnManagedMemory mem = new UnManagedMemory(size))
             {
-                IntPtr buffer = (IntPtr)mem.Handle;
-                Marshal.StructureToPtr(structure, buffer, false);
-                Marshal.Copy(buffer, bytes, 0, size);
-
+                unsafe
+                {
+                    IntPtr buffer = (IntPtr)mem.Handle;
+                    Marshal.StructureToPtr(structure, buffer, false);
+                    Marshal.Copy(buffer, bytes, 0, size);
+                }
+                
                 return bytes;
             }
+            
         }
 
         /// <summary>
@@ -91,17 +95,20 @@ namespace TestReader
         /// </summary>
         /// <param name="bytes">需要转换的字节流</param>
         /// <param name="structType">转换结果的结构体类型</param>
-        /// <returns></returns>
+        /// <returns>返回结构体对象</returns>
         public Object BytesToStruct(byte[] bytes, Type structType)
         {
             int size = Marshal.SizeOf(structType);
 
             using (UnManagedMemory mem = new UnManagedMemory(size))
             {
-                IntPtr buffer = (IntPtr)mem.Handle;
-                Marshal.Copy(bytes, 0, buffer, size);
+                unsafe
+                {
+                    IntPtr buffer = (IntPtr)mem.Handle;
+                    Marshal.Copy(bytes, 0, buffer, size);
 
-                return Marshal.PtrToStructure(buffer, structType);
+                    return Marshal.PtrToStructure(buffer, structType);
+                }
             }
         }
     }
@@ -120,12 +127,18 @@ namespace TestReader
         {
             this.TrackingId = id;
         }
+
+        public BodyData(Body body)
+        {
+            this.TrackingId = body.TrackingId;
+            this.joints = body.Joints as Dictionary<JointType, Joint>;
+        }
     }
 
     public class BodyReader : IDisposable
     {
         private FileStream fs;
-        static readonly uint BodyNum = 6;
+        readonly uint BodyNum = 6;
         public BodyReader(FileStream fs)
         {
             this.fs = fs;

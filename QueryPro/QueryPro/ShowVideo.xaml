@@ -1,0 +1,31 @@
+﻿<Window x:Class="QueryPro.ShowVideo"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="ShowVideo" Height="581.5" Width="820">
+    <Window.Resources>
+        <Style TargetType="{x:Type Button}" x:Key="ColorButtonStyle">
+            <Setter Property="Width" Value="10"/>
+            <Setter Property="Height" Value="10"/>
+        </Style>
+        <SolidColorBrush x:Key="brush" Color="Red"/>
+    </Window.Resources>
+
+    <StackPanel>
+        <MediaElement Name="myMediaElement" 
+     Width="800" Height="450" LoadedBehavior="Manual" UnloadedBehavior="Stop" Stretch="Fill" 
+     MediaOpened="myMediaElement_MediaOpened" MediaEnded="myMediaElement_MediaEnded" MouseUp="myMediaElement_MouseUp"/>
+        <Slider Name="timelineSlider" Margin="5" Width="800" Height="10"/>
+
+        <StackPanel Name="appearDock" HorizontalAlignment="Left" Width="800" Height="20" Orientation="Horizontal" Margin="8,0,0,0" >
+            <!--<Button Content="" Margin="10,0,20,0" Style="{StaticResource ColorButtonStyle}" Background="{DynamicResource brush}" />-->
+            <!--<Button Content="" Margin="0,0,719,0" Style="{StaticResource ColorButtonStyle}" Background="{DynamicResource brush}" />-->
+        </StackPanel>
+        <StackPanel HorizontalAlignment="Center" Width="180" Height="30" Orientation="Horizontal" Margin="322,0,323,0">
+            <Button Content="＜＜" x:Name="backButton" Margin="5,0,0,0" Width="30" VerticalAlignment="Center" Click="backButton_Click"/>
+            <Button Content="Play" x:Name="playButton" Margin="20,0,0,0" Width="30" Click="playButton_Click"/>
+            <Button Content="Stop" x:Name="stopBotton" Margin="10,0,0,0" Width="30" Click="stopBotton_Click"/>
+            <Button Content="＞＞" x:Name="foreBotton" Margin="20,0,0,0" Width="30" VerticalAlignment="Center" Click="foreBotton_Click"/>
+        </StackPanel>
+
+    </StackPanel>
+</Window>

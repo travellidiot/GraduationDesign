@@ -1,31 +1,22 @@
 
 Boddy 2:
-bin 0:	0.08505983
-
+bin 0:	0.08505983
 bin 1:	0
-
 bin 2:	0
-
 bin 3:	0
-
 bin 4:	0
-
 bin 5:	0
-
 bin 6:	0
-
 bin 7:	0
-
 bin 8:	0
-
 bin 9:	0
-bin 10:	0
-bin 11:	0
-bin 12:	0
-bin 13:	0
-bin 14:	0
-bin 15:	0
-bin 16:	0
+bin 10:	0
+bin 11:	0
+bin 12:	0
+bin 13:	0
+bin 14:	0
+bin 15:	0
+bin 16:	0
 bin 17:	0
 bin 18:	0
 bin 19:	0

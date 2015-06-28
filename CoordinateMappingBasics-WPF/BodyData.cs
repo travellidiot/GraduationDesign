@@ -70,7 +70,7 @@ namespace FeatureExtracter
         /// 结构体转为字节流
         /// </summary>
         /// <param name="structure">需要转换的结构体对象</param>
-        /// <returns></returns>
+        /// <returns>字节流</returns>
         public byte[] StructToBytes(Object structure)
         {
             int size = Marshal.SizeOf(structure);
@@ -95,7 +95,7 @@ namespace FeatureExtracter
         /// </summary>
         /// <param name="bytes">需要转换的字节流</param>
         /// <param name="structType">转换结果的结构体类型</param>
-        /// <returns></returns>
+        /// <returns>返回结构体对象</returns>
         public Object BytesToStruct(byte[] bytes, Type structType)
         {
             int size = Marshal.SizeOf(structType);

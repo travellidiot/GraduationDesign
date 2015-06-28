@@ -359,7 +359,7 @@ namespace Microsoft.Samples.Kinect.CoordinateMappingBasics
         /// </summary>
         /// <param name="sender">object sending the event</param>
         /// <param name="e">event arguments</param>
-        private void Reader_MultiSourceFrameArrived(object sender, MultiSourceFrameArrivedEventArgs e)
+        private async void Reader_MultiSourceFrameArrived(object sender, MultiSourceFrameArrivedEventArgs e)
         {
             int depthWidth = 0;
             int depthHeight = 0;
@@ -396,6 +396,14 @@ namespace Microsoft.Samples.Kinect.CoordinateMappingBasics
                     return;
                 }
 
+                // Lock the bitmap for writing
+                this.bitmap.Lock();
+                isBitmapLocked = true;
+                uint size = (uint)((this.bitmap.BackBufferStride * (this.bitmap.PixelHeight - 1)) + (this.bitmap.PixelWidth * this.bytesPerPixel));
+                colorFrame.CopyConvertedFrameDataToIntPtr(this.bitmap.BackBuffer, size, ColorImageFormat.Bgra);
+                this.bitmap.AddDirtyRect(new Int32Rect(0, 0, this.bitmap.PixelWidth, this.bitmap.PixelHeight));
+
+
                 #region Process Depth
                 tasks[0] = Task.Factory.StartNew(() =>
                 {
@@ -415,14 +423,6 @@ namespace Microsoft.Samples.Kinect.CoordinateMappingBasics
                 #region Process Color
                 tasks[1] = Task.Factory.StartNew(() =>
                 {
-                    this.bitmap.Lock();
-
-                    // Lock the bitmap for writing
-                    isBitmapLocked = true;
-                    uint size = (uint)((this.bitmap.BackBufferStride * (this.bitmap.PixelHeight - 1)) + (this.bitmap.PixelWidth * this.bytesPerPixel));
-                    colorFrame.CopyConvertedFrameDataToIntPtr(this.bitmap.BackBuffer, size, ColorImageFormat.Bgra);
-                    this.bitmap.AddDirtyRect(new Int32Rect(0, 0, this.bitmap.PixelWidth, this.bitmap.PixelHeight));
-
                     int videoWidth = colorFrame.FrameDescription.Width;
                     int videoHeight = colorFrame.FrameDescription.Height;
 
@@ -602,7 +602,7 @@ namespace Microsoft.Samples.Kinect.CoordinateMappingBasics
                 //}
                 // We're done with the DepthFrame 
 
-                Task.WaitAll(tasks);
+                await Task.WhenAll(tasks);
 
                 depthFrame.Dispose();
                 depthFrame = null;

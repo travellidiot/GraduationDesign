@@ -1,0 +1,12 @@
+﻿<Window x:Class="QueryPro.VideoInfo"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="VideoInfo" Height="300" Width="300">
+    <Grid>
+        <Label Content="开始： 2015/5/28  10:32:14" HorizontalAlignment="Left" Margin="56,50,0,0" VerticalAlignment="Top"/>
+        <Label Content="结束： 2015/5/28  10:32:29" HorizontalAlignment="Left" Margin="56,94,0,0" VerticalAlignment="Top"/>
+        <Label Content="地点： 曹东404" HorizontalAlignment="Left" Margin="98,149,0,0" VerticalAlignment="Top"/>
+        <Label Content="人数： 1" HorizontalAlignment="Left" Margin="116,196,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.259,-0.4"/>
+
+    </Grid>
+</Window>
