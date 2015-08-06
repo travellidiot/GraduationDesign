@@ -1,0 +1,13 @@
+﻿<Properties StartupItem="FeatureExtracter/FeatureExtracter.csproj">
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="FeatureExtracter/BodyData.cs">
+    <Files>
+      <File FileName="FeatureExtracter/Program.cs" Line="12" Column="18" />
+      <File FileName="FeatureExtracter/BodyData.cs" Line="28" Column="10" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+</Properties>
